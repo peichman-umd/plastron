@@ -4,7 +4,7 @@ import os
 from collections import defaultdict
 from contextlib import contextmanager
 from plastron.exceptions import DataReadException
-from plastron.models import Issue, Letter, Poster
+from plastron.models import Issue, Item, Letter, Poster
 from plastron.namespaces import get_manager, bibo, rdf, fedora
 from plastron.rdf import RDFObjectProperty, RDFDataProperty, Resource
 from rdflib import Literal, Graph, URIRef
@@ -222,6 +222,31 @@ class CSVSerializer:
                 write_csv_file(row_info, metadata_file)
 
 
+def to_json(resource):
+    document = {'@id': resource.uri}
+    for prop_name, prop in resource.props.items():
+        if isinstance(prop, RDFObjectProperty):
+            if prop.is_embedded:
+                document[prop_name] = [ to_json(obj) for obj in prop.values ]
+            else:
+                document[prop_name] = [v.uri if hasattr(v, 'uri') else v for v in prop.values]
+        else:
+            document[prop_name] = [v for v in prop.values]
+    return document
+
+
+class JSONSerializer:
+    def __init__(self):
+        self.documents = []
+
+    def write(self, graph: Graph, files=None, binaries_dir=''):
+        main_subject = set([s for s in graph.subjects() if '#' not in str(s)]).pop()
+        resource_class = detect_resource_class(graph, main_subject, fallback=Item)
+
+        resource = resource_class.from_graph(graph, main_subject)
+        self.documents.append(to_json(resource))
+
+
 class EmptyItemListError(Exception):
     pass
 
@@ -231,5 +256,6 @@ SERIALIZER_CLASSES = {
     'turtle': TurtleSerializer,
     'ttl': TurtleSerializer,
     'text/csv': CSVSerializer,
-    'csv': CSVSerializer
+    'csv': CSVSerializer,
+    'json': JSONSerializer
 }
