@@ -1,12 +1,14 @@
 import logging
 from argparse import Namespace
 from pathlib import Path
+from typing import List
+
+from rdflib import Graph, Literal, URIRef
+from rdflib.util import from_n3
+
 from plastron.commands import BaseCommand
 from plastron.http import Repository
 from plastron.namespaces import dcterms, get_manager, pcdm, rdf
-from rdflib import Graph, Literal, URIRef
-from rdflib.util import from_n3
-from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +117,51 @@ def serialize(graph: Graph, **kwargs):
     return graph.serialize(**kwargs)
 
 
+def create_at_path(repo: Repository, target_path: Path, graph: Graph = None):
+    all_paths = paths_to_create(repo, target_path)
+
+    if len(all_paths) == 0:
+        logger.info(f'{target_path} already exists')
+        return
+
+    resource = None
+    for path in all_paths:
+        logger.info(f'Creating {path}')
+        if path == target_path and graph:
+            resource = repo.create(
+                path=str(path),
+                headers={
+                    'Content-Type': 'text/turtle'
+                },
+                data=serialize(graph, format='turtle')
+            )
+        else:
+            resource = repo.create(path=str(path))
+
+        logger.info(f'Created {resource}')
+
+    return resource
+
+
+def create_in_container(repo: Repository, container_path: Path, graph: Graph = None):
+    if not repo.path_exists(str(container_path)):
+        logger.error(f'Container path "{container_path}" not found')
+        return
+    if graph:
+        resource = repo.create(
+            container_path=str(container_path),
+            headers={
+                'Content-Type': 'text/turtle'
+            },
+            data=serialize(graph, format='turtle')
+        )
+    else:
+        resource = repo.create(container_path=str(container_path))
+
+    logger.info(f'Created {resource}')
+    return resource
+
+
 class Command(BaseCommand):
     def __call__(self, repo: Repository, args: Namespace):
         self.repo = repo
@@ -134,50 +181,11 @@ class Command(BaseCommand):
         for p, o in properties:
             graph.add((URIRef(''), p, o))
 
-        if args.path is not None:
-            self.create_at_path(Path(args.path), graph)
-        elif args.container is not None:
-            self.create_in_container(Path(args.container), graph)
-
-    def create_at_path(self, target_path: Path, graph: Graph = None):
-        all_paths = paths_to_create(self.repo, target_path)
-
-        if len(all_paths) == 0:
-            logger.info(f'{target_path} already exists')
-            return
-
         resource = None
-        for path in all_paths:
-            logger.info(f'Creating {path}')
-            if path == target_path and graph:
-                resource = self.repo.create(
-                    path=str(path),
-                    headers={
-                        'Content-Type': 'text/turtle'
-                    },
-                    data=serialize(graph, format='turtle')
-                )
-            else:
-                resource = self.repo.create(path=str(path))
+        if args.path is not None:
+            resource = create_at_path(repo, Path(args.path), graph)
+        elif args.container is not None:
+            resource = create_in_container(repo, Path(args.container), graph)
 
-            logger.info(f'Created {resource}')
-
-        return resource
-
-    def create_in_container(self, container_path: Path, graph: Graph = None):
-        if not self.repo.path_exists(str(container_path)):
-            logger.error(f'Container path "{container_path}" not found')
-            return
-        if graph:
-            resource = self.repo.create(
-                container_path=str(container_path),
-                headers={
-                    'Content-Type': 'text/turtle'
-                },
-                data=serialize(graph, format='turtle')
-            )
-        else:
-            resource = self.repo.create(container_path=str(container_path))
-
-        logger.info(f'Created {resource}')
-        return resource
+        if resource:
+            print(resource.uri)

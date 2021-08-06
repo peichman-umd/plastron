@@ -1,4 +1,6 @@
 import logging
+from argparse import FileType
+
 from plastron.commands import BaseCommand
 from plastron.namespaces import rdf
 from plastron.util import ResourceList, parse_predicate_list
@@ -18,6 +20,14 @@ def configure_cli(subparsers):
         action='store'
     )
     parser.add_argument(
+        '--file', '-f',
+        type=FileType('r', encoding='utf-8'),
+        help=(
+            'file containing a list of URIs to reindex; '
+            'use "-" for STDIN'
+        )
+    )
+    parser.add_argument(
         'uris', nargs='*',
         help='URIs of repository objects to reindex'
     )
@@ -28,15 +38,14 @@ class Command(BaseCommand):
     def __init__(self, config=None):
         super().__init__(config=config)
         self.broker = None
-        self.repo = None
 
     def __call__(self, repo, args):
         self.broker.connect()
         self.reindexing_queue = self.broker.destination('reindexing'),
         self.username = args.delegated_user or 'plastron'
         resources = ResourceList(
-            repository=self.repo,
-            uri_list=args.uris
+            repository=repo,
+            uris=args.file or args.uris or []
         )
 
         resources.process(
@@ -46,14 +55,14 @@ class Command(BaseCommand):
         )
         self.broker.disconnect()
 
-    def reindex_item(self, resource, graph):
+    def reindex_item(self, resource, graph, repo):
         logger.info(f'Reindexing {resource.uri}')
         types = ','.join(graph.objects(subject=URIRef(resource.uri), predicate=rdf.type))
         self.broker.send_message(
             destination=self.reindexing_queue,
             headers={
                 'CamelFcrepoUri': resource.uri,
-                'CamelFcrepoPath': self.repo.repo_path(resource.uri),
+                'CamelFcrepoPath': repo.repo_path(resource.uri),
                 'CamelFcrepoResourceType': types,
                 'CamelFcrepoUser': self.username,
                 'persistent': 'true'

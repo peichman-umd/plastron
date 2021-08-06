@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import shutil
-import sys
 import urllib
 from argparse import ArgumentTypeError
 from datetime import datetime
@@ -113,10 +112,9 @@ def envsubst(value, env=None):
 
 
 class ResourceList:
-    def __init__(self, repository, uri_list=None, file=None, completed_file=None):
+    def __init__(self, repository, uris=None, completed_file=None):
         self.repository = repository
-        self.uri_list = uri_list
-        self.file = file
+        self._uris = uris if uris is not None else []
         self.use_transaction = True
         if completed_file is not None:
             logger.info(f'Reading the completed items log from {completed_file}')
@@ -132,22 +130,13 @@ class ResourceList:
             self.completed = None
         self.completed_buffer = None
 
-    def get_uris(self):
-        if self.file is not None:
-            if self.file == '-':
-                # special filename "-" means STDIN
-                for line in sys.stdin:
-                    yield line
-            else:
-                with open(self.file) as fh:
-                    for line in fh:
-                        yield line.rstrip()
-        else:
-            for uri in self.uri_list:
-                yield uri
+    @property
+    def uris(self):
+        for uri in self._uris:
+            yield uri.rstrip()
 
     def get_resources(self, traverse=None):
-        for uri in self.get_uris():
+        for uri in self.uris:
             if not self.repository.contains(uri):
                 logger.warning(f'Resource {uri} is not contained within the repository {self.repository.endpoint}')
                 continue
@@ -171,7 +160,7 @@ class ResourceList:
             with Transaction(self.repository, keep_alive=90) as transaction:
                 for resource, graph in self.get_resources(traverse=traverse):
                     try:
-                        method(resource, graph)
+                        method(resource, graph, self.repository)
                     except RESTAPIException as e:
                         logger.error(f'{method.__name__} failed for {resource}: {e}: {e.response.text}')
                         # if anything fails while processing of the list of uris, attempt to
@@ -191,7 +180,7 @@ class ResourceList:
         else:
             for resource, graph in self.get_resources(traverse=traverse):
                 try:
-                    method(resource, graph)
+                    method(resource, graph, self.repository)
                 except RESTAPIException as e:
                     logger.error(f'{method.__name__} failed for {resource}: {e}: {e.response.text}')
                     logger.warning(f'Continuing {method.__name__} with next item')

@@ -6,7 +6,7 @@ import pytest
 from flask import url_for
 from http_server_mock import HttpServerMock
 
-from plastron.commands import create
+from plastron.commands.create import create_at_path, create_in_container
 from plastron.http import Repository
 
 
@@ -56,33 +56,30 @@ def repo_base_config():
 
 
 def test_create_at_path(repo_base_config, repo_app):
-    cmd = create.Command()
-    cmd.repo = Repository(repo_base_config)
+    repo = Repository(repo_base_config)
     with repo_app.run('localhost', 9999):
-        assert not cmd.repo.path_exists('/foo')
-        cmd.create_at_path(Path('/foo'))
-        assert cmd.repo.path_exists('/foo')
+        assert not repo.path_exists('/foo')
+        create_at_path(repo, Path('/foo'))
+        assert repo.path_exists('/foo')
 
 
 def test_create_at_path_nested(repo_base_config, repo_app):
-    cmd = create.Command()
-    cmd.repo = Repository(repo_base_config)
+    repo = Repository(repo_base_config)
     with repo_app.run('localhost', 9999):
-        assert not cmd.repo.path_exists('/foo')
-        assert not cmd.repo.path_exists('/foo/bar')
-        assert not cmd.repo.path_exists('/foo/bar/baz')
-        cmd.create_at_path(Path('/foo/bar/baz'))
-        assert cmd.repo.path_exists('/foo')
-        assert cmd.repo.path_exists('/foo/bar')
-        assert cmd.repo.path_exists('/foo/bar/baz')
+        assert not repo.path_exists('/foo')
+        assert not repo.path_exists('/foo/bar')
+        assert not repo.path_exists('/foo/bar/baz')
+        create_at_path(repo, Path('/foo/bar/baz'))
+        assert repo.path_exists('/foo')
+        assert repo.path_exists('/foo/bar')
+        assert repo.path_exists('/foo/bar/baz')
 
 
 def test_create_in_container(repo_base_config, repo_app):
-    cmd = create.Command()
-    cmd.repo = Repository(repo_base_config)
+    repo = Repository(repo_base_config)
     with repo_app.run('localhost', 9999):
-        cmd.create_at_path(Path('/foo'))
-        assert cmd.repo.path_exists('/foo')
-        resource = cmd.create_in_container(Path('/foo'))
+        create_at_path(repo, Path('/foo'))
+        assert repo.path_exists('/foo')
+        resource = create_in_container(repo, Path('/foo'))
         assert resource.uri
         assert re.match('http://localhost:9999/foo/.+', str(resource.uri))

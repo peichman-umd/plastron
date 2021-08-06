@@ -1,5 +1,7 @@
 import logging
 import os
+from pathlib import Path
+
 import requests
 import threading
 from base64 import urlsafe_b64encode
@@ -16,15 +18,6 @@ OMIT_SERVER_MANAGED_TRIPLES = 'return=representation; omit="http://fedora.info/d
 
 def random_slug(length=6):
     return urlsafe_b64encode(os.urandom(length)).decode()
-
-
-# lightweight representation of a resource URI and URI of its description
-# for RDFSources, in general the uri and description_uri will be the same
-class ResourceURI(namedtuple('Resource', ['uri', 'description_uri'])):
-    __slots__ = ()
-
-    def __str__(self):
-        return self.uri
 
 
 class FlatCreator:
@@ -563,3 +556,15 @@ class TransactionKeepAlive(threading.Thread):
 
 class TransactionError(Exception):
     pass
+
+
+# lightweight representation of a resource URI and URI of its description
+# for RDFSources, in general the uri and description_uri will be the same
+class ResourceURI(namedtuple('Resource', ['uri', 'description_uri'])):
+    __slots__ = ()
+
+    def __str__(self):
+        return self.uri
+
+    def path(self, repo: Repository) -> Path:
+        return Path(repo.repo_path(self.uri))

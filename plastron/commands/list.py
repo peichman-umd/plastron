@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
         resources = ResourceList(
             repository=fcrepo,
-            uri_list=args.uris
+            uris=args.uris
         )
 
         resources.process(
@@ -45,7 +45,7 @@ class Command(BaseCommand):
             use_transaction=False
         )
 
-    def list_item(self, resource, graph):
+    def list_item(self, resource, graph, _repo):
         if self.long:
             title = get_title_string(graph)
             print(f'{resource} {title}')

@@ -1,4 +1,5 @@
 import logging
+from argparse import FileType
 from email.utils import parsedate_to_datetime
 
 from plastron.commands import BaseCommand
@@ -37,8 +38,11 @@ def configure_cli(subparsers):
     )
     parser.add_argument(
         '-f', '--file',
-        help='File containing a list of URIs to delete',
-        action='store'
+        type=FileType('r', encoding='utf-8'),
+        help=(
+            'file containing a list of URIs to delete; '
+            'use "-" for STDIN'
+        )
     )
     parser.add_argument(
         'uris', nargs='*',
@@ -58,8 +62,7 @@ class Command(BaseCommand):
 
         self.resources = ResourceList(
             repository=self.repository,
-            uri_list=args.uris,
-            file=args.file,
+            uris=args.file or args.uris or [],
             completed_file=args.completed
         )
         self.resources.process(
@@ -68,7 +71,7 @@ class Command(BaseCommand):
             use_transaction=args.use_transactions
         )
 
-    def delete_item(self, resource, graph):
+    def delete_item(self, resource, graph, _repo):
         if self.resources.completed and resource.uri in self.resources.completed:
             logger.info(f'Resource {resource.uri} has already been deleted; skipping')
             return
