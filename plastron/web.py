@@ -5,7 +5,9 @@ from pathlib import Path
 from flask import Flask, url_for
 from werkzeug.exceptions import InternalServerError, NotFound
 
+from plastron.http import Repository
 from plastron.jobs import ConfigMissingError, ImportJob, JobError
+from plastron.serializers import JSONSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,7 @@ def create_app(config):
     app = Flask(__name__)
     app.config.from_mapping(config)
     jobs_dir = Path(app.config['JOBS_DIR'])
+    repo = Repository(app.config['REPOSITORY'])
 
     def get_job(job_id: str):
         job = ImportJob(urllib.parse.unquote(job_id), str(jobs_dir))
@@ -73,5 +76,13 @@ def create_app(config):
             }
         except JobError as e:
             raise NotFound from e
+
+    @app.route('/resources/<path:resource_path>')
+    def show_resource(resource_path):
+        uri = repo.endpoint + '/' + resource_path
+        graph = repo.get_graph(uri)
+        serializer = JSONSerializer()
+        serializer.write(graph)
+        return {'resources': serializer.documents}
 
     return app

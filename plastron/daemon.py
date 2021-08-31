@@ -116,9 +116,10 @@ class HTTPDaemon(Thread):
         server_config = config.get('HTTP_SERVER', {})
         self.host = server_config.get('HOST', '0.0.0.0')
         self.port = int(server_config.get('PORT', 5000))
+        self.repo_config = config['REPOSITORY']
 
     def run(self):
-        app = create_app({'JOBS_DIR': Path(self.jobs_dir)})
+        app = create_app({'JOBS_DIR': Path(self.jobs_dir), 'REPOSITORY': self.repo_config})
         logger.info(f'HTTP server listening on {self.host}:{self.port}')
         waitress.serve(app, host=self.host, port=self.port)
 

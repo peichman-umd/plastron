@@ -10,7 +10,6 @@ from plastron.rdf import RDFObjectProperty, RDFDataProperty, Resource
 from rdflib import Literal, Graph, URIRef
 from urllib.parse import urlparse
 
-
 logger = logging.getLogger(__name__)
 nsm = get_manager()
 
@@ -223,16 +222,25 @@ class CSVSerializer:
 
 
 def to_json(resource):
-    document = {'@id': resource.uri}
+    document = {'@id': str(resource.uri)}
     for prop_name, prop in resource.props.items():
         if isinstance(prop, RDFObjectProperty):
             if prop.is_embedded:
-                document[prop_name] = [ to_json(obj) for obj in prop.values ]
+                document[prop_name] = [to_json(obj) for obj in prop.values]
             else:
-                document[prop_name] = [v.uri if hasattr(v, 'uri') else v for v in prop.values]
+                document[prop_name] = [str(v.uri if hasattr(v, 'uri') else v) for v in prop.values]
         else:
-            document[prop_name] = [v for v in prop.values]
+            document[prop_name] = [literal_to_json(v) for v in prop.values]
     return document
+
+
+def literal_to_json(literal: Literal):
+    if literal.datatype:
+        return {'@value': str(literal), '@type': literal.datatype}
+    elif literal.language:
+        return {'@value': str(literal), '@lang': literal.language}
+    else:
+        return str(literal)
 
 
 class JSONSerializer:
