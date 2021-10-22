@@ -18,7 +18,8 @@ from plastron.commands import BaseCommand
 from plastron.exceptions import ConfigError, FailureException, NoValidationRulesetException, RESTAPIException
 from plastron.files import HTTPFileSource, LocalFileSource, RemoteFileSource, ZipFileSource
 from plastron.http import Transaction
-from plastron.jobs import ImportJob, ImportedItemStatus, JobError, ModelClassNotFoundError, build_lookup_index
+from plastron.jobs import ImportJob, ImportedItemStatus, JobError, ModelClassNotFoundError, build_lookup_index, \
+    progress_update
 from plastron.namespaces import get_manager, prov, sc
 from plastron.oa import Annotation, TextualBody
 from plastron.pcdm import File, PreservationMasterFile
@@ -591,6 +592,7 @@ class Command(BaseCommand):
         updated_uris = []
         created_uris = []
         import_run = job.new_run().start()
+        yield progress_update(start_time, metadata.stats())
         for row in metadata:
             repo_changeset = create_repo_changeset(repo, metadata, row)
             item = repo_changeset.item
@@ -646,15 +648,7 @@ class Command(BaseCommand):
                 import_run.drop_failed(item, row.line_reference, reason=str(e))
 
             # update the status
-            now = datetime.now().timestamp()
-            yield {
-                'time': {
-                    'started': start_time,
-                    'now': now,
-                    'elapsed': now - start_time
-                },
-                'count': metadata.stats()
-            }
+            yield progress_update(start_time, metadata.stats())
 
         logger.info(f'Skipped {metadata.skipped} items')
         logger.info(f'Completed {len(job.completed_log) - initial_completed_item_count} items')

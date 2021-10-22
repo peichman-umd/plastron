@@ -17,6 +17,7 @@ from requests import ConnectionError
 
 from plastron.commands import BaseCommand
 from plastron.exceptions import DataReadException, FailureException, RESTAPIException
+from plastron.jobs import progress_update
 from plastron.models import Item
 from plastron.namespaces import get_manager
 from plastron.serializers import EmptyItemListError, SERIALIZER_CLASSES, detect_resource_class
@@ -144,6 +145,7 @@ class Command(BaseCommand):
 
         export_dir = os.path.join(temp_dir.name, 'data')
         serializer = serializer_class(directory=export_dir, public_uri_template=args.uri_template)
+        yield progress_update(start_time, {'total': total, 'exported': count, 'errors': errors})
         for uri in args.uris:
             try:
                 logger.info(f'Exporting item {count + 1}/{total}: {uri}')
@@ -201,20 +203,7 @@ class Command(BaseCommand):
                 logger.error(f'Unable to retrieve {uri}: {e}')
                 errors += 1
 
-            # update the status
-            now = datetime.now().timestamp()
-            yield {
-                'time': {
-                    'started': start_time,
-                    'now': now,
-                    'elapsed': now - start_time
-                },
-                'count': {
-                    'total': total,
-                    'exported': count,
-                    'errors': errors
-                }
-            }
+            yield progress_update(start_time, {'total': total, 'exported': count, 'errors': errors})
 
         try:
             serializer.finish()

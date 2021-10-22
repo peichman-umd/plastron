@@ -4,6 +4,7 @@ import os
 import re
 import urllib.parse
 from collections import defaultdict
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from shutil import copyfileobj
@@ -23,6 +24,18 @@ from plastron.util import CompletedItemLog, ItemLog, datetimestamp
 
 nsm = get_manager()
 logger = logging.getLogger(__name__)
+
+
+def progress_update(start_time, data):
+    now = datetime.now().timestamp()
+    return {
+        'time': {
+            'started': start_time,
+            'now': now,
+            'elapsed': now - start_time
+        },
+        'count': data
+    }
 
 
 class ModelClassNotFoundError(Exception):
