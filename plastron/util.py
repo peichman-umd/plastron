@@ -271,5 +271,15 @@ class ItemLog:
         return len(self.item_keys)
 
 
+class CompletedItemLog(ItemLog):
+    def __init__(self, filename):
+        super().__init__(
+            filename,
+            fieldnames=['id', 'timestamp', 'title', 'uri', 'status'],
+            keyfield='id',
+            header=True
+        )
+
+
 class ItemLogError(Exception):
     pass

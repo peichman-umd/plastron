@@ -18,7 +18,7 @@ from plastron.exceptions import DataReadException, FailureException
 from plastron.namespaces import get_manager
 from plastron.rdf import RDFDataProperty, Resource
 from plastron.serializers import CSVSerializer
-from plastron.util import ItemLog, datetimestamp
+from plastron.util import CompletedItemLog, ItemLog, datetimestamp
 
 
 nsm = get_manager()
@@ -166,8 +166,7 @@ class ImportJob:
         self._model_class = None
 
         # record of items that are successfully loaded
-        completed_fieldnames = ['id', 'timestamp', 'title', 'uri', 'status']
-        self.completed_log = ItemLog(self.dir / 'completed.log.csv', completed_fieldnames, 'id')
+        self.completed_log = CompletedItemLog(self.dir / 'completed.log.csv')
 
     def __str__(self):
         return self.id
