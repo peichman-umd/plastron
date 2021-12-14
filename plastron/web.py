@@ -1,15 +1,16 @@
+import json
 import logging
 import urllib.parse
 from pathlib import Path
 
 from flask import Flask, request, url_for
 from pyparsing import ParseException
-from werkzeug.exceptions import BadRequest, NotAcceptable, NotFound, UnsupportedMediaType
+from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType
 
 import plastron.models
 from plastron.commands.importcommand import validate
 from plastron.http import Repository
-from plastron.jobs import ConfigMissingError, ImportJob, JobError, ModelClassNotFoundError
+from plastron.jobs import ConfigMissingError, ImportJob, JobError
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +70,14 @@ def create_app(config):
         job = get_job(job_id)
         try:
             job.load_config()
-        except ConfigMissingError as e:
-            logger.warning(f'Cannot open config file {job.config_filename} for job {job}')
-            # TODO: more complete information in the response body?
-            raise NotFound
+        except ConfigMissingError:
+            message = f'Cannot open config file {job.config_filename} for job {job}'
+            logger.warning(message)
+            return problem_detail(
+                status=404,
+                title='Missing job config file',
+                detail=message
+            )
 
         try:
             return {
@@ -85,6 +90,32 @@ def create_app(config):
             }
         except JobError as e:
             raise NotFound from e
+
+    @app.route('/resources/<path:parent_resource_path>', methods=['POST'])
+    def create_resource(parent_resource_path):
+        if not request.is_json:
+            raise UnsupportedMediaType
+
+        params = request.mimetype_params
+        model_class_name = params.get('profile', 'Item')
+        try:
+            model_class = getattr(plastron.models, model_class_name)
+        except AttributeError as e:
+            return problem_detail(
+                status=404,
+                title='Unrecognized content-model',
+                detail=f'{model_class_name} is not a recognized content-model name'
+            )
+
+        data = request.json
+        obj = model_class(**data)
+        report = obj.validate()
+        if not report.is_valid():
+            return json.dumps({'invalid': [str(f) for f in report.failed()]}), 400, {'Content-Type': 'application/json'}
+
+        obj.create(repo, container_path='/' + parent_resource_path)
+        obj.update(repo)
+        return '', 201, {'Location': obj.uri}
 
     @app.route('/resources/<path:resource_path>', methods=['PATCH'])
     def update_resource(resource_path):

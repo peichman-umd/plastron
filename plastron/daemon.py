@@ -68,7 +68,7 @@ def main():
     logger.info(f'plastrond {version}')
 
     threads = [
-        STOMPDaemon(config=config),
+        #STOMPDaemon(config=config),
         HTTPDaemon(config=config)
     ]
 
