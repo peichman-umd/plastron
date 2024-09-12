@@ -13,19 +13,19 @@ authors = [
 readme = "README.md"
 requires-python = ">= 3.8"
 dependencies = [
-    "rdflib",
-    "requests",
-    "requests-jwtauth",
-    "urlobject",
+    "rdflib~=6.3",
+    "requests~=2.32",
+    "requests-jwtauth~=1.0",
+    "urlobject~=2.4",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "freezegun",
-    "http-server-mock",
-    "pytest",
-    "pytest-cov",
+    "freezegun~=1.5",
+    "http-server-mock~=1.7",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
 ]
 
 [build-system]

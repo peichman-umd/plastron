@@ -13,14 +13,14 @@ authors = [
 readme = "README.md"
 requires-python = '>=3.8'
 dependencies = [
-    "rdflib",
+    "rdflib~=6.3",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "pytest",
-    "pytest-cov",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
 ]
 
 [project.urls]

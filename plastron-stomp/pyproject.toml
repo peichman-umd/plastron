@@ -13,23 +13,23 @@ authors = [
 readme = "README.md"
 requires-python = ">= 3.8"
 dependencies = [
-    "click",
-    "BeautifulSoup4",
+    "BeautifulSoup4~=4.12",
+    "click~=8.1",
     "plastron-models",
     "plastron-repo",
     "plastron-utils",
-    "pyparsing",
-    "PyYAML",
-    "stomp.py",
+    "pyparsing~=3.1",
+    "PyYAML~=6.0",
+    "stomp.py~=8.1",
     'watchdog==0.10.3',
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    'CoilMQ',
-    "pytest",
-    "pytest-cov",
+    'CoilMQ~=1.0',
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
 ]
 
 [project.scripts]

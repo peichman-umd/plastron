@@ -13,27 +13,27 @@ authors = [
 readme = "README.md"
 requires-python = ">= 3.8"
 dependencies = [
-    "edtf_validate",
-    "importlib_metadata",
-    "lxml",
-    "requests",
-    "paramiko",
-    "pillow",
+    "edtf_validate~=2.0",
+    "importlib_metadata~=8.5",
+    "lxml~=5.3",
+    "paramiko~=3.4",
+    "pillow~=10.4",
     "plastron-client",
     "plastron-rdf",
     "plastron-utils",
-    "python-iso639",
+    "python-iso639 >= 2024.4.27",
     # rdflib 6.0.0 fixed the 308 HTTP redirect bug
     "rdflib >= 6.0.0",
+    "requests~=2.32",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "freezegun",
-    "httpretty",
-    "pytest",
-    "pytest-cov",
+    "freezegun~=1.5",
+    "httpretty~=1.1",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
 ]
 
 [project.entry-points.'plastron.content_models']

@@ -13,23 +13,23 @@ authors = [
 readme = "README.md"
 requires-python = ">= 3.8"
 dependencies = [
-    "BeautifulSoup4",
-    "lxml",
-    "Pillow",
+    "BeautifulSoup4~=4.12",
+    "lxml~=5.3",
+    "Pillow~=10.4",
     "plastron-models",
     "plastron-repo",
     "plastron-utils",
-    "pyparsing",
-    "pysolr",
-    "PyYAML",
-    "rdflib",
+    "pyparsing~=3.1",
+    "pysolr~=3.9",
+    "PyYAML~=6.0",
+    "rdflib~=6.3",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "pytest",
-    "pytest-cov",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
 ]
 
 [project.scripts]

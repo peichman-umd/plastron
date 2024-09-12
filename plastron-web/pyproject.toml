@@ -13,19 +13,19 @@ authors = [
 readme = "README.md"
 requires-python = ">= 3.8"
 dependencies = [
-    "click",
-    "flask",
+    "click~=8.1",
+    "flask~=3.0",
     "plastron-repo",
     "plastron-utils",
-    "python-dotenv",
-    "waitress",
+    "python-dotenv~=1.0",
+    "waitress~=3.0",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "pytest",
-    "pytest-cov",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
 ]
 
 [project.scripts]

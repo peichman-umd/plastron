@@ -13,27 +13,27 @@ authors = [
 readme = "README.md"
 requires-python = ">= 3.8"
 dependencies = [
-    "bagit",
-    "beautifulsoup4",
-    "paramiko",
+    "bagit~=1.8",
+    "beautifulsoup4~=4.12",
+    "paramiko~=3.4",
     "plastron-client",
     "plastron-messaging",
     "plastron-models",
     "plastron-utils",
-    "pysolr",
-    "PyYAML",
-    "rdflib",
-    "requests",
-    "URLObject",
+    "pysolr~=3.9",
+    "PyYAML~=6.0",
+    "rdflib~=6.3",
+    "requests~=2.32",
+    "URLObject~=2.4",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "freezegun",
-    "pytest",
-    "pytest-cov",
-    "pytest-datadir",
+    "freezegun~=1.5",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
+    "pytest-datadir~=1.5",
 ]
 
 [build-system]
