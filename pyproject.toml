@@ -25,6 +25,17 @@ dependencies = [
 cli = [ "plastron-cli" ]
 stomp = [ "plastron-stomp" ]
 web = [ "plastron-web" ]
+test = [
+    "plastron-client[test]",
+    "plastron-messaging[test]",
+    "plastron-models[test]",
+    "plastron-rdf[test]",
+    "plastron-repo[test]",
+    "plastron-utils[test]",
+    "plastron-cli[test]",
+    "plastron-stomp[test]",
+    "plastron-web[test]",
+]
 
 [build-system]
 requires = ["setuptools>=66.1.0"]
