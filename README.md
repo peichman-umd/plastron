@@ -65,39 +65,22 @@ pip install 'plastron[cli,stomp,web]'
 
 ## Development
 
-This repository includes a [.python-version](.python-version) file. If you are
-using a tool like [pyenv] to manage your Python versions, it will select
-an installed Python 3.8 for you.
-
-To install Plastron in [development mode], do the following:
+Clone the repo, and use [uv] to install the dependencies, including those 
+in all the optional dependency extra groups.
 
 ```zsh
 git clone git@github.com:umd-lib/plastron.git
 cd plastron
-python -m venv --prompt "plastron-py$(cat .python-version)" .venv
-source .venv/bin/activate
-pip install \
-    -e './plastron-utils[test]' \
-    -e './plastron-client[test]' \
-    -e './plastron-rdf[test]' \
-    -e './plastron-messaging[test]' \
-    -e './plastron-models[test]' \
-    -e './plastron-repo[test]' \
-    -e './plastron-web[test]' \
-    -e './plastron-stomp[test]' \
-    -e './plastron-cli[test]'
-```
 
-This allows for in-place editing of Plastron's source code in the git
-repository (i.e., it is not locked away in a Python site-packages directory
-structure).
+uv sync --all-extras
+```
 
 ### Testing
 
-Plastron uses the [pytest] test framework for its tests.
+Plastron uses the [pytest] test framework for its tests:
 
-```bash
-pytest
+```zsh
+uv run pytest
 ```
 
 See the [testing documentation](docs/testing.md) for more
@@ -107,18 +90,11 @@ information.
 
 To generate API documentation from the code, use [pdoc]:
 
-```bash
-pip install pdoc
+```zsh
+uv run pdoc plastron
 ```
 
-To use the built-in, live-reloading web server to generate and browse the 
-documentation, use:
-
-```bash
-pdoc plastron
-```
-
-The generated HTML documentation will be available at 
+The generated (and live-updating) HTML documentation will be available at 
 <http://localhost:8080/plastron.html>.
 
 ## Name
@@ -133,7 +109,7 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/Turtle_shell#Plastron)
 See the [LICENSE](LICENSE.md) file for license rights and
 limitations (Apache 2.0).
 
-[development mode]: https://packaging.python.org/tutorials/installing-packages/#installing-from-vcs
+[uv]: https://docs.astral.sh/uv/
 [pytest]: https://pypi.org/project/pytest/
 [pyenv]: https://github.com/pyenv/pyenv
 [pdoc]: https://pdoc.dev/
