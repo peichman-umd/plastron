@@ -48,6 +48,11 @@ packages = []
 [tool.setuptools.dynamic]
 version = { "file" = "VERSION" }
 
+[tool.uv]
+dev-dependencies = [
+    "pdoc>=14.7.0",
+]
+
 [tool.uv.sources]
 plastron-cli = { workspace = true }
 plastron-client = { workspace = true }

@@ -25,6 +25,19 @@ wheels = [
 ]
 
 [[package]]
+name = "astunparse"
+version = "1.6.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+    { name = "wheel" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f3/af/4182184d3c338792894f34a62672919db7ca008c89abee9b564dd34d8029/astunparse-1.6.3.tar.gz", hash = "sha256:5ad93a8456f0d084c3456d059fd9a92cce667963232cbf763eac3bc5b7940872", size = 18290 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2b/03/13dde6512ad7b4557eb792fbcf0c653af6076b81e5941d36ec61f7ce6028/astunparse-1.6.3-py2.py3-none-any.whl", hash = "sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8", size = 12732 },
+]
+
+[[package]]
 name = "bagit"
 version = "1.8.1"
 source = { registry = "https://pypi.org/simple" }
@@ -803,6 +816,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e7/7f/470d6fcdf23f9f3518f6b0b76be9df16dcc8630ad409947f8be2eb0ed13a/pathtools-0.1.2.tar.gz", hash = "sha256:7c35c5421a39bb82e58018febd90e3b6e5db34c5443aaaf742b3f33d4655f1c0", size = 11006 }
 
 [[package]]
+name = "pdoc"
+version = "14.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "astunparse", marker = "python_full_version < '3.9'" },
+    { name = "jinja2" },
+    { name = "markupsafe" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/28/50/e801b13b07efecaf8c2349c64edfffdd7bc1d9ebb9837f840c0e8af11cf8/pdoc-14.7.0.tar.gz", hash = "sha256:2d28af9c0acc39180744ad0543e4bbc3223ecba0d1302db315ec521c51f71f93", size = 154626 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/bb/6dfa7e6f4eeed22d3311af76256615da637f821d584cf7b7aab5f4cbffc5/pdoc-14.7.0-py3-none-any.whl", hash = "sha256:72377a907efc6b2c5b3c56b717ef34f11d93621dced3b663f3aede0b844c0ad2", size = 144805 },
+]
+
+[[package]]
 name = "pid"
 version = "3.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -921,22 +949,50 @@ cli = [
 stomp = [
     { name = "plastron-stomp" },
 ]
+test = [
+    { name = "plastron-cli", extra = ["test"] },
+    { name = "plastron-client", extra = ["test"] },
+    { name = "plastron-messaging", extra = ["test"] },
+    { name = "plastron-models", extra = ["test"] },
+    { name = "plastron-rdf", extra = ["test"] },
+    { name = "plastron-repo", extra = ["test"] },
+    { name = "plastron-stomp", extra = ["test"] },
+    { name = "plastron-utils", extra = ["test"] },
+    { name = "plastron-web", extra = ["test"] },
+]
 web = [
     { name = "plastron-web" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pdoc" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "plastron-cli", marker = "extra == 'cli'", editable = "plastron-cli" },
+    { name = "plastron-cli", extras = ["test"], marker = "extra == 'test'", editable = "plastron-cli" },
     { name = "plastron-client", editable = "plastron-client" },
+    { name = "plastron-client", extras = ["test"], marker = "extra == 'test'", editable = "plastron-client" },
     { name = "plastron-messaging", editable = "plastron-messaging" },
+    { name = "plastron-messaging", extras = ["test"], marker = "extra == 'test'", editable = "plastron-messaging" },
     { name = "plastron-models", editable = "plastron-models" },
+    { name = "plastron-models", extras = ["test"], marker = "extra == 'test'", editable = "plastron-models" },
     { name = "plastron-rdf", editable = "plastron-rdf" },
+    { name = "plastron-rdf", extras = ["test"], marker = "extra == 'test'", editable = "plastron-rdf" },
     { name = "plastron-repo", editable = "plastron-repo" },
+    { name = "plastron-repo", extras = ["test"], marker = "extra == 'test'", editable = "plastron-repo" },
     { name = "plastron-stomp", marker = "extra == 'stomp'", editable = "plastron-stomp" },
+    { name = "plastron-stomp", extras = ["test"], marker = "extra == 'test'", editable = "plastron-stomp" },
     { name = "plastron-utils", editable = "plastron-utils" },
+    { name = "plastron-utils", extras = ["test"], marker = "extra == 'test'", editable = "plastron-utils" },
     { name = "plastron-web", marker = "extra == 'web'", editable = "plastron-web" },
+    { name = "plastron-web", extras = ["test"], marker = "extra == 'test'", editable = "plastron-web" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pdoc", specifier = ">=14.7.0" }]
 
 [[package]]
 name = "plastron-cli"
@@ -1263,6 +1319,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1d/b2/31537cf4b1ca988837256c910a668b553fceb8f069bedc4b1c826024b52c/pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6", size = 172736 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/a3/a812df4e2dd5696d1f351d58b8fe16a405b234ad2886a0dab9183fb78109/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc", size = 117552 },
+]
+
+[[package]]
+name = "pygments"
+version = "2.18.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/62/8336eff65bcbc8e4cb5d05b55faf041285951b6e80f33e2bff2024788f31/pygments-2.18.0.tar.gz", hash = "sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199", size = 4891905 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/3f/01c8b82017c199075f8f788d0d906b9ffbbc5a47dc9918a945e13d5a2bda/pygments-2.18.0-py3-none-any.whl", hash = "sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a", size = 1205513 },
 ]
 
 [[package]]
