@@ -2,10 +2,11 @@
 
 ## CLI Usage
 
-```zsh
+```
 $ plastron import --help
 usage: plastron import [-h] [-m MODEL] [-l LIMIT] [-% PERCENTAGE]
                        [--validate-only] [--make-template FILENAME]
+                       [--convert-from {ndnp}] [--convert-option NAME VALUE]
                        [--access URI|CURIE] [--member-of URI]
                        [--binaries-location LOCATION] [--container PATH]
                        [--job-id JOB_ID] [--resume]
@@ -17,61 +18,52 @@ Import data to the repository
 positional arguments:
   import_file           name of the file to import from
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -m MODEL, --model MODEL
                         data model to use
   -l LIMIT, --limit LIMIT
                         limit the number of rows to read from the import file
   -% PERCENTAGE, --percent PERCENTAGE
-                        select an evenly spaced subset of items to import; the size of this set will be as close as possible to the specified percentage
-                        of the total items
+                        select an evenly spaced subset of items to import; 
+                        the size of this set will be as close as possible 
+                        to the specified percentage of the total items
   --validate-only       only validate, do not do the actual import
   --make-template FILENAME
                         create a CSV template for the given model
+  --convert-from {ndnp}
+                        use a pre-processor to transform another data 
+                        format into an import job
+  --convert-option NAME VALUE, -o NAME VALUE
+                        set a parameter to used by the --convert-from 
+                        pre-processor; repeatable
   --access URI|CURIE    URI or CURIE of the access class to apply to new items
   --member-of URI       URI of the object that new items are PCDM members of
   --binaries-location LOCATION
-                        where to find binaries; either a path to a directory, a "zip:<path to zipfile>" URI, an SFTP URI in the form
-                        "sftp://<user>@<host>/<path to dir>", or a URI in the form "zip+sftp://<user>@<host>/<path to zipfile>"
-  --container PATH      parent container for new items; defaults to the RELPATH in the repo configuration file
-  --job-id JOB_ID       unique identifier for this job; defaults to "import-{timestamp}"
-  --resume              resume a job that has been started; requires --job-id {id} to be present
+                        where to find binaries; either a path to a directory,
+                        a "zip:<path to zipfile>" URI, an SFTP URI in the
+                        form "sftp://<user>@<host>/<path to dir>", or a URI
+                        in the form "zip+sftp://<user>@<host>/<path to zipfile>"
+  --container PATH      parent container for new items; defaults to the 
+                        RELPATH in the repo configuration file
+  --job-id JOB_ID       unique identifier for this job; defaults to 
+                        "import-{timestamp}"
+  --resume              resume a job that has been started; requires
+                        --job-id {id} to be present
   --extract-text-from MIME_TYPES, -x MIME_TYPES
-                        extract text from binaries of the given MIME types, and add as annotations
+                        extract text from binaries of the given MIME types, 
+                        and add as annotations
   --publish             automatically publish all items in this import
-```
-
-## Daemon Usage
-
-STOMP message headers:
-
-```text
-PlastronCommand: import
-PlastronJobId: JOB_ID
-PlastronArg-model: MODEL
-PlastronArg-limit: LIMIT
-PlastronArg-percent: PERCENTAGE
-PlastronArg-validate-only: {true|false}
-PlastronArg-publish: {true|false}
-PlastronArg-resume: {true|false}
-PlastronArg-access: ACCESS
-PlastronArg-member-of: MEMBER_OF
-PlastronArg-binaries-location: BINARIES_LOCATION
-PlastronArg-container: CONTAINER
-PlastronArg-extract-text: MIME_TYPES
-PlastronArg-structure: {flat|hierarchical}
-PlastronArg-relpath: PATH
 ```
 
 ## Configuration
 
 The following keys are used in the `COMMANDS/IMPORT` section of the config file:
 
-| Name            | Purpose |
-|-----------------|---------|
-|`JOBS_DIR`       |Base directory for storing [job](#jobs) information. Defaults to `jobs` in the working directory|
-|`SSH_PRIVATE_KEY`|Path to the private key to use when retrieving binaries over SFTP|
+| Name              | Purpose                                                                                          |
+|-------------------|--------------------------------------------------------------------------------------------------|
+| `JOBS_DIR`        | Base directory for storing [job](#jobs) information. Defaults to `jobs` in the working directory |
+| `SSH_PRIVATE_KEY` | Path to the private key to use when retrieving binaries over SFTP                                |
 
 ## Jobs
 
@@ -86,12 +78,12 @@ items recorded there.
 
 The `completed.log.csv` has the following columns:
 
-| Name      | Purpose |
-|-----------|---------|
-|`id`       |Unique identifier for this item (within the context of this job)|
-|`timestamp`|Date and time when this item was successfully imported|
-|`title`    |Title of the item|
-|`uri`      |URI of the item in the target repository|
+| Name        | Purpose                                                          |
+|-------------|------------------------------------------------------------------|
+| `id`        | Unique identifier for this item (within the context of this job) |
+| `timestamp` | Date and time when this item was successfully imported           |
+| `title`     | Title of the item                                                |
+| `uri`       | URI of the item in the target repository                         |
 
 You may specify a job ID on the command line using the `--job-id` argument. If
 you do not provide one, Plastron will generate one using the current timestamp.
@@ -115,7 +107,7 @@ Failed items are items that could not be imported due to problems adding
 records to the repository, and are recorded in the "dropped-failed" log for that
 run, along with the reason for the failure.
 
-Some failures may occcur due to transient network issues. In those cases,
+Some failures may occur due to transient network issues. In those cases,
 resuming the import should allow those items to tbe added.
 
 ### Dropped Item Logs
@@ -123,13 +115,13 @@ resuming the import should allow those items to tbe added.
 Both the "dropped-invalid" and "dropped-failed" item logs have the following
 columns:
 
-| Name      | Purpose |
-|-----------|---------|
-|`id`       |Unique identifier for this item (within the context of this job)|
-|`timestamp`|Date and time when this item failed to import|
-|`title`    |Title of the item|
-|`uri`      |URI of the item in the target repository; this may be empty if the item is new|
-|`reason`   |Short description of the error leading to failure to import|
+| Name        | Purpose                                                                        |
+|-------------|--------------------------------------------------------------------------------|
+| `id`        | Unique identifier for this item (within the context of this job)               |
+| `timestamp` | Date and time when this item failed to import                                  |
+| `title`     | Title of the item                                                              |
+| `uri`       | URI of the item in the target repository; this may be empty if the item is new |
+| `reason`    | Short description of the error leading to failure to import                    |
 
 ### Example
 
@@ -203,3 +195,47 @@ imported during the first run of the job.
 
 If you specify a percentage that would generate a subset larger than the number
 of remaining items, Plastron will import all the remaining items.
+
+
+## Pre-Processors
+
+In order to handle importing from data sources other than its standard CSV 
+spreadsheet format, the `import` command provides the ability to use a 
+pre-processor to convert data from some other format to a standard import 
+CSV spreadsheet.
+
+Currently available pre-processors:
+
+* [ndnp](#ndnp-pre-processor)
+
+To use a pre-processor, provide the `--convert-from` option to the import 
+command, along with the name of the pre-processor to use.
+
+Some pre-processors take initialization parameters. These are provided 
+using the `--convert-option` or `-o` switches, followed by the parameter 
+name and value as two separate strings. For example, `-o batch_file small.xml`
+sets the `batch_file` parameter to `'small.xml'`.
+
+Jobs initiated using a pre-processor do **not** need special handling when 
+resuming. At that point, it is just a standard job with a standard import 
+CSV spreadsheet.
+
+### ndnp Pre-processor
+
+* Name: `ndnp`
+* Options:
+  * `dir` Base directory of the NDNP file tree
+  * `batch_file` Name of the XML file that describes this NDNP package; 
+    relative the `dir` parameter
+
+Example:
+
+```zsh
+plastron --config plastron.yml import \
+    --convert-from ndnp \
+    -o dir student_newspapers/data \
+    -o batch_file small.xml \
+    --model Issue \
+    --member-of http://fcrepo-local:8080/fcrepo/rest/dc/2016/1 \
+    --container /dc/2016/1
+```
