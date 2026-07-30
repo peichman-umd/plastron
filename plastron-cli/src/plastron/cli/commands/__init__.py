@@ -5,7 +5,7 @@ from plastron.context import PlastronContext
 
 
 class BaseCommand:
-    def __init__(self, context: PlastronContext = None):
+    def __init__(self, context: PlastronContext):
         self.context = context
         self.result = None
 

@@ -1,0 +1,14 @@
+@prefix premis:  <http://www.loc.gov/premis/rdf/v1#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<https://fcrepo.lib.umd.edu/fcrepo/rest/dc/2023/1/5a/60/72/70/5a607270-e618-456a-b270-698be3fe706b/m/G88_DCS5/f/3gg06-rU>
+        premis:hasFixity  <https://fcrepo.lib.umd.edu/fcrepo/rest/dc/2023/1/5a/60/72/70/5a607270-e618-456a-b270-698be3fe706b/m/G88_DCS5/f/3gg06-rU#fixity/1785960382106> .
+
+<https://fcrepo.lib.umd.edu/fcrepo/rest/dc/2023/1/5a/60/72/70/5a607270-e618-456a-b270-698be3fe706b/m/G88_DCS5/f/3gg06-rU#fixity/1785960382106>
+        rdf:type                 premis:Fixity ;
+        rdf:type                 premis:EventOutcomeDetail ;
+        premis:hasEventOutcome   "BAD_CHECKSUM" ;
+        premis:hasEventOutcome   "BAD_SIZE" ;
+        premis:hasMessageDigestAlgorithm  "SHA-1" ;
+        premis:hasMessageDigest  <urn:sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709> ;
+        premis:hasSize           "0"^^<http://www.w3.org/2001/XMLSchema#long> .
