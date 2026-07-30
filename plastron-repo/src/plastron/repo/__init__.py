@@ -1,4 +1,5 @@
 import logging
+import os.path
 from contextlib import contextmanager
 from http import HTTPStatus
 from typing import Optional, Type, TypeVar, Iterator, Union
@@ -157,7 +158,7 @@ class RepositoryResource:
     @property
     def url(self) -> Optional[URLObject]:
         if self.path is not None:
-            return self.repo.endpoint.url.add_path(self.path.lstrip('/'))
+            return self.repo.endpoint.url.with_path(os.path.join(self.repo.endpoint.url.path, self.path.lstrip('/')))
         else:
             return None
 

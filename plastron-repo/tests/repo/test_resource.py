@@ -31,3 +31,15 @@ def test_convert_to_unsuitable_class(mock_repo):
     with pytest.raises(RepositoryError) as e:
         resource.convert_to(NotARepoResource)  # noqa
         assert 'Unable to convert' in str(e.value)
+
+
+@pytest.mark.parametrize(
+    ('path', 'expected_url'),
+    [
+        ('/foo', 'http://example.com/fcrepo/foo'),
+        ('/bar/fcr:fixity', 'http://example.com/fcrepo/bar/fcr:fixity'),
+    ]
+)
+def test_resource_url(mock_repo, path, expected_url):
+    resource = RepositoryResource(mock_repo, path)
+    assert resource.url == expected_url
