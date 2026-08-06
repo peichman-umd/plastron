@@ -19,6 +19,7 @@ from rdflib import URIRef
 from requests import Response, Session
 
 from plastron.client import ClientError
+from plastron.models.fedora import FedoraBinary, FixityCheck, FixityDetails
 from plastron.models.pcdm import PCDMFile
 from plastron.namespaces import pcdmuse, fabio
 from plastron.repo import RepositoryResource, RepositoryError
@@ -100,6 +101,30 @@ class BinaryResource(RepositoryResource):
             raise RepositoryError(f'Unable to update {self.url}: {response}')
 
         return response
+
+    def check_fixity(self) -> FixityDetails:
+        """Run a fixity check of this binary and return a `FixityDetails` object
+        describing the results of the check. Takes the value of the `fedora:hasFixityService`
+        property as the URL to use to request the fixity check. Raises a `FixityCheckingError`
+        exception if there is no fixity service, or if there are problems requesting the
+        fixity check."""
+
+        obj = self.describe(FedoraBinary)
+        if len(obj.fixity_service) == 0:
+            raise FixityCheckingError(f'No fixity service found for {self.url}')
+        fixity_service_url = str(obj.fixity_service.value)
+        logger.info(f'Checking fixity using {fixity_service_url}')
+        try:
+            resource = self.repo.read(fixity_service_url)
+        except RepositoryError as e:
+            raise FixityCheckingError(f'Unable to run fixity check for {self.url}: {e}') from e
+
+        fixity_check = resource.describe(FixityCheck, uri=obj.uri)
+        return fixity_check.fixity_details.object
+
+
+class FixityCheckingError(Exception):
+    pass
 
 
 def get_ssh_client(sftp_uri: str | urllib.parse.SplitResult, **kwargs) -> SSHClient:

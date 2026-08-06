@@ -116,6 +116,10 @@ class Repository:
             raise TypeError(f'Cannot use a key of type "{type(item).__name__}" here')
         return self.get_resource(path, resource_class=resource_class)
 
+    def read(self, path: str, resource_class: type[ResourceType] | None = None) -> ResourceType:
+        """Shortcut method for `repo.get_resource(path, resource_class).read()`."""
+        return self.get_resource(path, resource_class=resource_class).read()
+
     @contextmanager
     def transaction(self, keep_alive: int = 90):
         try:
@@ -202,8 +206,8 @@ class RepositoryResource:
             self._description_url = URLObject(response.links['describedby']['url'])
         return response
 
-    def describe(self, model: Type[RDFResourceType]) -> RDFResourceType:
-        return model(uri=URIRef(self.url), graph=self._graph)
+    def describe(self, model: Type[RDFResourceType], uri: URIRef | None = None) -> RDFResourceType:
+        return model(uri=URIRef(uri or self.url), graph=self._graph)
 
     def attach_description(self, description: RDFResourceBase):
         description.uri = URIRef(self.url)
