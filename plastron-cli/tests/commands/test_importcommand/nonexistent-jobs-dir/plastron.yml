@@ -1,0 +1,5 @@
+REPOSITORY:
+  REST_ENDPOINT: http://localhost:9999
+COMMANDS:
+  IMPORT:
+    JOBS_DIR: /nonexistent_directory

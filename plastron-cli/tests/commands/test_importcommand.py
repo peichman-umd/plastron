@@ -1,109 +1,76 @@
-import argparse
 import os
 import tempfile
 from csv import DictReader
-from io import StringIO
 from uuid import uuid4
 
 import pytest
+import yaml
 
-from plastron.cli.commands.importcommand import Command
+from plastron.cli import main
 from plastron.jobs import JobConfigError, JobNotFoundError
 
 
-def test_cannot_resume_without_job_id(plastron_context):
+def test_cannot_resume_without_job_id(runner, config_file_name):
     # Verifies that the import command throws RuntimeError when resuming a
     # job and the job id is not provided
-    args = create_args(job_id=None, resume=True)
-    plastron_context.args = args
-    command = Command(context=plastron_context)
-
-    with pytest.raises(RuntimeError) as excinfo:
-        for _ in command(args):
-            pass
-
-    assert 'Resuming a job requires a job id' in str(excinfo.value)
+    result = runner.invoke(main, ['-c', config_file_name, 'import', '--resume'])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, RuntimeError)
+    assert 'Resuming a job requires a job id' in str(result.exception)
 
 
-def test_cannot_resume_without_job_directory(plastron_context):
+def test_cannot_resume_without_job_directory(runner, datadir):
     # Verifies that the import command throws RuntimeError when resuming a
     # job and the directory associated with job id is not found
-    jobs_dir = '/nonexistent_directory'
-    plastron_context.config.update({'COMMANDS': {'IMPORT': {'JOBS_DIR': jobs_dir}}})
-    args = create_args(resume=True)
-    plastron_context.args = args
-    command = Command(context=plastron_context)
-
-    with pytest.raises(JobNotFoundError) as excinfo:
-        for _ in command(args):
-            pass
-
-    assert 'does not exist' in str(excinfo.value)
+    result = runner.invoke(main, ['-c', datadir / 'nonexistent-jobs-dir/plastron.yml', 'import', '--resume', '--job-id', str(uuid4())])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, JobNotFoundError)
+    assert 'does not exist' in str(result.exception)
 
 
-def test_cannot_resume_without_config_file(plastron_context):
-    # Verifies that the import command throws ConfigMissingError when resuming a
+def test_cannot_resume_without_config_file(runner, datadir):
+    # Verifies that the import command throws JobConfigError when resuming a
     # job and a config file is not found
-    job_id = 'test_id'
-    args = create_args(job_id=job_id, resume=True)
-    plastron_context.args = args
-
+    job_id = str(uuid4())
     with tempfile.TemporaryDirectory() as tmpdirname:
-        plastron_context.config.update({'COMMANDS': {'IMPORT': {'JOBS_DIR': tmpdirname}}})
+        with (datadir / 'no-job-config/plastron.yml').open(mode='w') as fh:
+            yaml.dump({'REPOSITORY': {'REST_ENDPOINT': 'http://localhost:9999'}, 'COMMANDS': {'IMPORT': {'JOBS_DIR': tmpdirname}}}, stream=fh)
 
         # Make subdirectory in tmpdirname for job
         job_dir = os.path.join(tmpdirname, job_id)
         os.mkdir(job_dir)
 
-        command = Command(context=plastron_context)
-
-        with pytest.raises(JobConfigError) as excinfo:
-            for _ in command(args):
-                pass
-
-        assert 'config.yml is missing' in str(excinfo.value)
+        result = runner.invoke(main, ['-c', datadir / 'no-job-config/plastron.yml', 'import', '--resume', '--job-id', job_id])
+        assert result.exit_code != 0
+        assert isinstance(result.exception, JobConfigError)
+        assert 'config.yml is missing' in str(result.exception)
 
 
-def test_model_is_required_unless_resuming(plastron_context):
+def test_model_is_required_unless_resuming(runner, datadir, config_file_name):
     # Verifies that the import command throws RuntimeError if model
     # is not provided when not resuming
-    args = create_args(model=None, resume=False)
-    plastron_context.args = args
-
-    command = Command(context=plastron_context)
-    with pytest.raises(RuntimeError) as excinfo:
-        for _ in command(args):
-            pass
-
-    assert 'A model is required unless resuming an existing job' in str(excinfo.value)
+    result = runner.invoke(main, ['-c', config_file_name, 'import', '--container', 'test_container', str(datadir / 'import.csv')])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, RuntimeError)
+    assert 'A model is required unless resuming an existing job' in str(result.exception)
 
 
-def test_import_file_is_required_unless_resuming(datadir, plastron_context):
+def test_import_file_is_required_unless_resuming(runner, config_file_name):
     # Verifies that the import command throws RuntimeError if an import_file
     # is not provided when not resuming
-    args = create_args(import_file=None, resume=False)
-    plastron_context.args = args
-
-    command = Command(context=plastron_context)
-    with pytest.raises(RuntimeError) as excinfo:
-        for _ in command(args):
-            pass
-
-    assert 'An import file is required unless resuming an existing job' in str(excinfo.value)
+    result = runner.invoke(main, ['-c', config_file_name, 'import', '--container', 'test_container', '--model', 'Item'])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, RuntimeError)
+    assert 'An import file is required unless resuming an existing job' in str(result.exception)
 
 
-def test_container_is_required_unless_resuming(datadir, plastron_context):
+def test_container_is_required_unless_resuming(runner, datadir, config_file_name):
     # Verifies that the import command throws RuntimeError if an import_file
     # is not provided when not resuming
-    args = create_args(container=None, resume=False)
-    plastron_context.args = args
-
-    command = Command(context=plastron_context)
-    with pytest.raises(RuntimeError) as excinfo:
-        for _ in command(args):
-            pass
-
-    assert 'A container is required unless resuming an existing job' in str(excinfo.value)
+    result = runner.invoke(main, ['-c', config_file_name, 'import', '--model', 'Item', str(datadir / 'import.csv')])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, RuntimeError)
+    assert 'A container is required unless resuming an existing job' in str(result.exception)
 
 
 @pytest.mark.parametrize(
@@ -222,13 +189,11 @@ def test_container_is_required_unless_resuming(datadir, plastron_context):
         ),
     ],
 )
-def test_make_template(plastron_context, model_name, expected_header_fields):
+def test_make_template(runner, config_file_name, plastron_context, model_name, expected_header_fields):
     template_file = tempfile.NamedTemporaryFile(delete=False)
-    with open(template_file.name, 'w') as template_file:
-        args = create_args(model=model_name, template_file=template_file)
-        plastron_context.args = args
-        command = Command(context=plastron_context)
-        command(args)
+
+    result = runner.invoke(main, ['-c', config_file_name, 'import', '--make-template', template_file.name, '--model', model_name])
+    assert result.exit_code == 0
 
     with open(template_file.name, 'r') as template_file:
         template_file.seek(0)
@@ -238,34 +203,3 @@ def test_make_template(plastron_context, model_name, expected_header_fields):
         os.unlink(template_file.name)
 
         assert header_fields == expected_header_fields
-
-
-def create_args(**kwargs):
-    """
-    Returns an argparse.Namespace object suitable for use in testing.
-
-    Individual tests should override attributes as needed to support
-    their scenario.
-
-    :param job_id: the job id to use
-    :return: a configured argparse.Namespace object
-    """
-    params = {
-        'job_id': str(uuid4()),
-        'delegated_user': None,
-        'convert_from': None,
-        'convert_params': [],
-        'resume': False,
-        'model': 'Item',
-        'access': None,
-        'member_of': 'test',
-        'container': 'test_container',
-        'binaries_location': 'test_binaries_location',
-        'template_file': None,
-        'import_file': StringIO('Title,Identifier\nfoobar,123'),
-        'percentage': None,
-        'validate_only': False,
-        'limit': None,
-    }
-    params.update(kwargs)
-    return argparse.Namespace(**params)

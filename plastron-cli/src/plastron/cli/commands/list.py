@@ -1,36 +1,31 @@
 import logging
-from argparse import Namespace
 
-from plastron.cli.commands import BaseCommand
-from plastron.models.pcdm import PCDMFile
-from plastron.namespaces import ldp
+import click
+
+from plastron.models.ldp import LDPContainer
+from plastron.models.pcdm import PCDMObject
+from plastron.repo import RepositoryError
 
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(name='list', aliases=['ls'], description='List objects in the repository')
-    # long mode to print more than just the URIs (name modeled after ls -l)
-    parser.add_argument('-l', '--long', help='Display additional information besides the URI', action='store_true')
-    parser.add_argument('uris', nargs='*', help='URIs of repository objects to list')
-    parser.set_defaults(cmd_name='list')
+@click.command(help='List objects in the repository')
+@click.option('--long', '-l', is_flag=True, help='Display additional information besides the URI.')
+@click.argument('uris', nargs=-1, metavar='[URI [URIs...]]', help='URIs of repository objects to list.')
+@click.pass_context
+def ls_command(ctx: click.Context, long, uris):
+    # default to list the repo root
+    for uri in uris or ['/']:
+        resource = ctx.obj.repo.get_resource(uri)
+        try:
+            resource.read()
+        except RepositoryError as e:
+            logger.error(str(e))
+            continue
 
-
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        self.long = args.long
-
-        for uri in args.uris:
-            resource = self.context.repo[uri].read()
-
-            if resource.is_binary:
-                print(uri)
-                continue
-
-            for child_resource in resource.walk(min_depth=1, max_depth=1, traverse=[ldp.contains]):
-                if self.long:
-                    description = child_resource.describe(PCDMFile)
-                    title = str(description.title)
-                    print(f'{child_resource.url} {title}')
-                else:
-                    print(child_resource.url)
+        for child_uri in resource.describe(LDPContainer).contains:
+            if long:
+                child_obj = ctx.obj.repo.read(child_uri).describe(PCDMObject)
+                click.echo(f'{child_uri} {child_obj.title}')
+            else:
+                click.echo(child_uri)

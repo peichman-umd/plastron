@@ -14,6 +14,7 @@ readme = "README.md"
 requires-python = ">= 3.10"
 dependencies = [
     "BeautifulSoup4",
+    "click>=8.5.0",
     "lxml<6.0",
     "Pillow",
     "plastron-jobs",
@@ -36,6 +37,11 @@ test = [
 
 [project.scripts]
 plastron = "plastron.cli:main"
+
+[project.entry-points.plastron_commands]
+find = "plastron.cli.commands.find:find_command"
+import = "plastron.cli.commands.importcommand:import_command"
+ls = "plastron.cli.commands.list:ls_command"
 
 [build-system]
 requires = ["setuptools>=66.1.0"]

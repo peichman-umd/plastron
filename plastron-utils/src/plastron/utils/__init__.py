@@ -149,7 +149,7 @@ def uri_or_curie(arg: str) -> URIRef:
     return term
 
 
-def parse_predicate_list(string: str, delimiter: str = ',') -> list[Node] | None:
+def parse_predicate_list(string: str, delimiter: str = ',') -> list[Node | str | None] | None:
     if string is None:
         return None
     manager = namespaces.get_manager()
