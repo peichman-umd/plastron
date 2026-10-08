@@ -3,6 +3,7 @@ from collections.abc import Callable
 from uuid import uuid4
 
 import pytest
+from click.testing import CliRunner
 from httpretty import httpretty
 from rdflib import Graph
 
@@ -30,6 +31,16 @@ def endpoint(repo_base_config):
         url=repo_base_config['REST_ENDPOINT'],
         default_path=repo_base_config['RELPATH'],
     )
+
+
+@pytest.fixture
+def runner() -> CliRunner:
+    return CliRunner()
+
+
+@pytest.fixture
+def config_file_name(shared_datadir):
+    return str(shared_datadir / 'plastron.yml')
 
 
 @pytest.fixture

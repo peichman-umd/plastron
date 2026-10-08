@@ -31,8 +31,9 @@ def get_uuid_from_uri(uri: str) -> str | None:
 
 @dataclass
 class PlastronContext:
-    config: dict[str, Any] = None
-    args: Namespace = None
+    config: dict[str, Any]
+    args: Namespace | None = None
+    delegated_user: str | None = None
 
     @property
     def version(self):
@@ -51,7 +52,6 @@ class PlastronContext:
 
     @cached_property
     def client(self) -> Client:
-        delegated_user = self.args.delegated_user if hasattr(self.args, 'delegated_user') else None
         repo_config = self.config.get('REPOSITORY', {})
         authenticator = get_authenticator(repo_config)
         try:
@@ -61,7 +61,7 @@ class PlastronContext:
                     origin_endpoint=Endpoint(url=repo_config['ORIGIN']),
                     auth=authenticator,
                     ua_string=f'plastron/{self.version}',
-                    on_behalf_of=delegated_user,
+                    on_behalf_of=self.delegated_user,
                     digest_algorithm=repo_config.get('DIGEST_ALGORITHM', 'sha1'),
                 )
             else:
@@ -69,7 +69,7 @@ class PlastronContext:
                     endpoint=self.endpoint,
                     auth=authenticator,
                     ua_string=f'plastron/{self.version}',
-                    on_behalf_of=delegated_user,
+                    on_behalf_of=self.delegated_user,
                     digest_algorithm=repo_config.get('DIGEST_ALGORITHM', 'sha1'),
                 )
         except KeyError as e:

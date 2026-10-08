@@ -1,12 +1,11 @@
 import logging
-from argparse import Namespace
 from collections.abc import Callable, Iterable, Iterator
 
+import click
 from rdflib import Literal, URIRef
 
 from plastron.cli import parse_data_property, parse_object_property
-from plastron.cli.commands import BaseCommand
-from plastron.namespaces import get_manager, rdf
+from plastron.namespaces import get_manager, rdf, ldp
 from plastron.repo import RepositoryResource
 from plastron.utils import parse_predicate_list, uri_or_curie
 
@@ -14,99 +13,81 @@ logger = logging.getLogger(__name__)
 manager = get_manager()
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(name='find', description='Find objects in the repository')
-    parser.add_argument(
-        '-R', '--recursive', help='search additional objects found by traversing the given predicate(s)', action='store'
-    )
-    parser.add_argument(
-        '-D',
-        '--data-property',
-        help=('an RDF data property to match; VALUE is treated as a Literal; repeatable'),
-        action='append',
-        nargs=2,
-        dest='data_properties',
-        metavar=('PREDICATE', 'VALUE'),
-        default=[],
-    )
-    parser.add_argument(
-        '-O',
-        '--object-property',
-        help=('an RDF object property to match; VALUE is treated as a CURIE or URIRef; repeatable'),
-        action='append',
-        nargs=2,
-        dest='object_properties',
-        metavar=('PREDICATE', 'VALUE'),
-        default=[],
-    )
-    parser.add_argument(
-        '-T',
-        '--rdf-type',
-        help=('RDF type to match; equivalent to "-O rdf:type TYPE"; TYPE is treated as a CURIE or URIRef; repeatable'),
-        action='append',
-        dest='types',
-        metavar='TYPE',
-        default=[],
-    )
-    any_or_all = parser.add_mutually_exclusive_group()
-    any_or_all.add_argument(
-        '--match-all',
-        help=('require all properties to match to include a resource in the result list; this is the default behavior'),
-        default=False,
-        action='store_true',
-    )
-    any_or_all.add_argument(
-        '--match-any',
-        help='require at least one property to match to include a resource in the result list',
-        default=False,
-        action='store_true',
-    )
-    parser.add_argument('uris', nargs='*', metavar='URI', help='search at this URI in the repository')
-    parser.set_defaults(cmd_name='find')
+@click.command(help='Find objects in the repository')
+@click.option(
+    '-D',
+    '--data-property',
+    'data_properties',
+    type=(str, str),
+    multiple=True,
+    metavar='PREDICATE VALUE',
+    help='An RDF data property to match; VALUE is treated as a Literal; repeatable.',
+)
+@click.option(
+    '-O',
+    '--object-property',
+    'object_properties',
+    type=(str, str),
+    multiple=True,
+    metavar='PREDICATE VALUE',
+    help='An RDF object property to match; VALUE is treated as a CURIE or URIRef; repeatable.',
+)
+@click.option('-T', '--rdf-type', 'types', multiple=True, metavar='TYPE')
+@click.option(
+    '--match-all',
+    is_flag=True,
+    help='Require all properties to match to include a resource in the result list; this is the default behavior.',
+)
+@click.option(
+    '--match-any', is_flag=True, help='Require at least one property to match to include a resource in the result list.'
+)
+@click.option('-R', '--recursive', help='Search additional objects found by traversing the given predicate(s).')
+@click.argument('uris', nargs=-1, metavar='[URI [URIs...]]', help='Search starting at this URI in the repository; repeatable.')
+@click.pass_context
+def find_command(ctx: click.Context, data_properties, object_properties, types, match_all, match_any, recursive, uris):
+    properties: list[tuple[URIRef, Literal | URIRef]] = [
+        *(parse_data_property(p, o) for p, o in data_properties),
+        *(parse_object_property(p, o) for p, o in object_properties),
+    ]
 
+    for rdf_type in types:
+        properties.append((rdf.type, uri_or_curie(rdf_type)))
 
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        self.properties: list[tuple[URIRef, Literal | URIRef]] = [
-            *(parse_data_property(p, o) for p, o in args.data_properties),
-            *(parse_object_property(p, o) for p, o in args.object_properties),
-        ]
+    if match_any:
+        match = any
+    elif match_all:
+        match = all
+    else:
+        match = all
 
-        for rdf_type in args.types:
-            self.properties.append((rdf.type, uri_or_curie(rdf_type)))
+    if len(properties) == 0:
+        logger.info('Matching all resources')
+    else:
+        logger.info(f'Matching resources with {match.__name__} of these properties:')
+        for p, o in properties:
+            logger.info(f'  {p.n3(namespace_manager=manager)} {o.n3(namespace_manager=manager)}')
 
-        if args.match_any:
-            self.match = any
-        else:
-            self.match = all
+    resource_count = 0
 
-        if len(self.properties) == 0:
-            logger.info('Matching all resources')
-        else:
-            logger.info(f'Matching {self.match.__name__} of these properties:')
-            for p, o in self.properties:
-                logger.info(f'  {p.n3(namespace_manager=manager)} {o.n3(namespace_manager=manager)}')
+    traverse = parse_predicate_list(recursive) if recursive else []
 
-        self.resource_count = 0
+    if traverse:
+        logger.info('Predicates used for recursive matching:')
+        for p in traverse:
+            logger.info(f'  {p.n3(namespace_manager=manager)}')
 
-        traverse = parse_predicate_list(args.recursive) if args.recursive else []
+    # default to search the repo root
+    for uri in uris or ['/']:
+        for resource in find(
+            start_resource=ctx.obj.repo[uri],
+            matcher=match,
+            traverse=traverse,
+            properties=properties,
+        ):
+            resource_count += 1
+            click.echo(resource.url)
 
-        if len(traverse) != 0:
-            logger.info('Predicates used for recursive matching:')
-            for p in traverse:
-                logger.info(f'  {p.n3(namespace_manager=manager)}')
-
-        for uri in args.uris:
-            for resource in find(
-                start_resource=self.context.repo[uri],
-                matcher=self.match,
-                traverse=traverse,
-                properties=self.properties,
-            ):
-                self.resource_count += 1
-                print(resource.url)
-
-        logger.info(f'Found {self.resource_count} resource(s)')
+    logger.info(f'Found {resource_count} resource(s)')
 
 
 def find(

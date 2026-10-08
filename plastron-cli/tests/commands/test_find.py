@@ -1,10 +1,10 @@
-from argparse import Namespace
-
 import httpretty
 import pytest
+from click.testing import CliRunner
 from rdflib import Graph, Literal
 
-from plastron.cli.commands.find import Command, find
+from plastron.cli import main
+from plastron.cli.commands.find import find
 from plastron.namespaces import dcterms, ldp, pcdm, rdf
 
 
@@ -36,54 +36,25 @@ def test_find(datadir, repo, simulate_repo, matcher, properties, expected_count)
     ('args', 'expected_paths'),
     [
         (
-            Namespace(
-                delegated_user=None,
-                recursive='ldp:contains',
-                data_properties=[],
-                object_properties=[],
-                types=[],
-                match_all=True,
-                match_any=False,
-                uris=['/container'],
-            ),
+            ['--recursive', 'ldp:contains', '/container'],
             ['/container', '/container/1', '/container/2'],
         ),
         (
-            Namespace(
-                delegated_user=None,
-                recursive='ldp:contains',
-                data_properties=[],
-                object_properties=[],
-                types=['pcdm:Object'],
-                match_all=True,
-                match_any=False,
-                uris=['/container'],
-            ),
+            ['--recursive', 'ldp:contains', '--rdf-type', 'pcdm:Object', '/container'],
             ['/container/1'],
         ),
         (
-            Namespace(
-                delegated_user=None,
-                recursive='ldp:contains',
-                data_properties=[('dcterms:title', 'Moonpig')],
-                object_properties=[],
-                types=['pcdm:Object'],
-                match_all=False,
-                match_any=True,
-                uris=['/container'],
-            ),
+            ['--recursive', 'ldp:contains', '--data-property', 'dcterms:title', 'Moonpig', '--rdf-type', 'pcdm:Object', '--match-any', '/container'],
             ['/container/1', '/container/2'],
         ),
     ],
 )
 @httpretty.activate
-def test_find_command(capsys, datadir, repo, plastron_context, simulate_repo, args, expected_paths):
+def test_find_command(datadir, shared_datadir, simulate_repo, args, expected_paths):
     graph = Graph().parse(file=(datadir / 'graph.ttl').open())
     simulate_repo(graph)
-    plastron_context.args = args
-    cmd = Command(context=plastron_context)
-    cmd(args)
-    captured = capsys.readouterr()
-    assert len(captured.out.splitlines()) == len(expected_paths)
+    runner = CliRunner()
+    result = runner.invoke(main, ['--config', str(shared_datadir / 'plastron.yml'), 'find', *args])
+    assert len(result.stdout.splitlines()) == len(expected_paths)
     for path in expected_paths:
-        assert f'http://localhost:9999{path}\n' in captured.out
+        assert f'http://localhost:9999{path}\n' in result.stdout
