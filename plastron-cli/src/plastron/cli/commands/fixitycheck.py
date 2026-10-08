@@ -1,64 +1,40 @@
 import csv
 import json
 import logging
-from collections.abc import Callable, Iterable
-
 import sys
-from argparse import Namespace, FileType
+from collections.abc import Callable
+from itertools import chain
 
-from plastron.cli import get_uris
-from plastron.cli.commands import BaseCommand
+import click
+
+from plastron.cli import argument, option
 from plastron.files import BinaryResource, FixityCheckingError
 from plastron.models.fedora import FedoraBinary
 
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(
-        name='fixitycheck',
-        description='Run a fixity check on objects in the repository',
-    )
-    parser.add_argument(
-        '-f', '--uris-file', action='store', type=FileType(), help='file containing URIs of objects to fixity check'
-    )
-    parser.add_argument(
-        '--format',
-        '-t',
-        choices=['csv', 'jsonl'],
-        default='csv',
-        help='output format of results; default is "csv"',
-    )
-    parser.add_argument(
-        'uris',
-        nargs='*',
-        metavar='URI',
-        help='URIs of objects to fixity check',
-    )
-    parser.set_defaults(cmd_name='fixitycheck')
-
-
-def get_writer(output_format: str) -> Callable[[dict], None]:
-    match output_format:
-        case 'csv':
-            writer = csv.writer(sys.stdout)
-            return lambda result: writer.writerow(result.values())
-        case 'jsonl':
-            return lambda result: print(json.dumps(result))
-        case _:
-            raise RuntimeError(f'Unknown output format: {output_format}')
-
-
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        # mimicking a click.Context object to bridge between argparse and click commands
-        ctx = Namespace(obj=self.context)
-        fixitycheck(ctx, uris=get_uris(args), output_format=args.format)
-
-
-def fixitycheck(ctx: Namespace, uris: Iterable[str], output_format: str):
+@click.command(help='Run a fixity check on objects in the repository')
+@click.option(
+    '--format',
+    '-t',
+    'output_format',
+    type=click.Choice(['csv', 'jsonl']),
+    default='csv',
+    help='output format of results; default is "csv"',
+)
+@option.uris_file(help='File containing a list of URIs of objects to fixity check')
+@argument.uris(help='URIs of objects to fixity check')
+@click.help_option('--help', '-h')
+@click.pass_context
+def fixitycheck_command(
+    ctx: click.Context,
+    output_format: str,
+    uris_file,
+    uris: list[str],
+):
     write = get_writer(output_format)
-    for uri in uris:
+    for uri in chain(uris_file or [], uris):
         binary_resource = ctx.obj.repo.read(uri, BinaryResource)
 
         try:
@@ -84,3 +60,14 @@ def fixitycheck(ctx: Namespace, uris: Iterable[str], output_format: str):
             'last_modified': str(obj.last_modified),
         }
         write(result)
+
+
+def get_writer(output_format: str) -> Callable[[dict], None]:
+    match output_format:
+        case 'csv':
+            writer = csv.writer(sys.stdout)
+            return lambda result: writer.writerow(result.values())
+        case 'jsonl':
+            return lambda result: print(json.dumps(result))
+        case _:
+            raise RuntimeError(f'Unknown output format: {output_format}')

@@ -1,9 +1,11 @@
 import logging
-from argparse import FileType, Namespace
+from collections.abc import Iterable
 from datetime import datetime, timezone
+from itertools import chain
 
-from plastron.cli import get_uris
-from plastron.cli.commands import BaseCommand
+import click
+
+from plastron.cli import argument, option
 from plastron.client import ClientError
 from plastron.jobs import ItemLog
 from plastron.models.pcdm import PCDMObject
@@ -14,76 +16,65 @@ from plastron.utils import parse_predicate_list
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(
-        name='delete', aliases=['del', 'rm'], description='Delete objects from the repository'
-    )
-    parser.add_argument(
-        '-R', '--recursive', help='Delete additional objects found by traversing the given predicate(s)', action='store'
-    )
-    parser.add_argument(
-        '-d', '--dry-run', help='Simulate a delete without modifying the repository', action='store_true'
-    )
-    parser.add_argument(
-        '--no-transactions',
-        '--no-txn',
-        help='run the update without using transactions',
-        action='store_false',
-        dest='use_transactions',
-    )
-    parser.add_argument('--completed', help='file recording the URIs of deleted resources', action='store')
-    parser.add_argument(
-        '-f',
-        '--file',
-        dest='uris_file',
-        type=FileType(mode='r'),
-        help='File containing a list of URIs to delete',
-        action='store',
-    )
-    parser.add_argument('uris', nargs='*', help='Repository URIs to be deleted.')
-    parser.set_defaults(cmd_name='delete')
+@click.command(help='Delete objects from the repository')
+@option.recursive()
+@option.dry_run()
+@click.option(
+    '--transactions/--no-transactions',
+    '--txn/--no-txn',
+    'use_transactions',
+    help='Run with or without using transactions.',
+)
+@click.option('--completed', help='File recording the URIs of deleted resources.', type=click.Path())
+@option.uris_file(help='File containing a list of URIs of resources to delete.')
+@argument.uris(help='Repository URIs to be deleted.')
+@click.help_option('--help', '-h')
+@click.pass_context
+def delete_command(
+    ctx: click.Context,
+    recursive: str | None,
+    dry_run: bool,
+    use_transactions: bool,
+    completed,
+    uris_file: Iterable[str],
+    uris: list[str],
+):
+    ctx.obj.client.test_connection()
+    if completed:
+        completed_log = ItemLog(completed, ['uri', 'title', 'timestamp'], 'uri')
+    else:
+        completed_log = None
 
+    if dry_run:
+        logger.info('Dry run enabled, no actual deletions will take place')
 
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        self.context.client.test_connection()
-        if args.completed:
-            completed_log = ItemLog(args.completed, ['uri', 'title', 'timestamp'], 'uri')
-        else:
-            completed_log = None
+    if recursive:
+        traverse = parse_predicate_list(recursive)
+    else:
+        # if recursive was not specified, traverse nothing
+        traverse = []
 
-        if args.dry_run:
-            logger.info('Dry run enabled, no actual deletions will take place')
-
-        if args.recursive:
-            traverse = parse_predicate_list(args.recursive)
-        else:
-            # if recursive was not specified, traverse nothing
-            traverse = []
-
-        uris = get_uris(args)
-
-        for uri in uris:
-            with context(repo=self.context.repo, use_transactions=args.use_transactions, dry_run=args.dry_run):
-                try:
-                    for resource in self.context.repo[uri].walk(traverse=traverse):
-                        obj = resource.describe(PCDMObject)
-                        title = obj.title
-                        if args.dry_run:
-                            logger.info(f'Would delete resource {resource.url} "{title}"')
-                            continue
-                        resource.delete()
-                        if completed_log is not None:
-                            completed_log.append(
-                                {
-                                    'uri': resource.url,
-                                    'title': str(title),
-                                    'timestamp': datetime.now(timezone.utc).isoformat('T'),
-                                }
-                            )
-                except RepositoryError as e:
-                    if isinstance(e.__cause__, ClientError) and e.__cause__.status_code in (404, 410):
-                        # not a problem to try and delete something that is not there
-                        logger.info(f'Resource {uri} does not exist; skipping')
-                    else:
-                        raise
+    for uri in chain(uris_file or [], uris):
+        with context(repo=ctx.obj.repo, use_transactions=use_transactions, dry_run=dry_run):
+            try:
+                for resource in ctx.obj.repo[uri].walk(traverse=traverse):
+                    obj = resource.describe(PCDMObject)
+                    title = obj.title
+                    if dry_run:
+                        logger.info(f'Would delete resource {resource.url} "{title}"')
+                        continue
+                    resource.delete()
+                    if completed_log is not None:
+                        completed_log.append(
+                            {
+                                'uri': resource.url,
+                                'title': str(title),
+                                'timestamp': datetime.now(timezone.utc).isoformat('T'),
+                            }
+                        )
+            except RepositoryError as e:
+                if isinstance(e.__cause__, ClientError) and e.__cause__.status_code in (404, 410):
+                    # not a problem to try and delete something that is not there
+                    logger.info(f'Resource {uri} does not exist; skipping')
+                else:
+                    raise

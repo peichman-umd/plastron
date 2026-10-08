@@ -126,11 +126,11 @@ class ExportJob(Job):
     context: PlastronContext
     export_format: str
     export_binaries: bool
-    binary_types: str
+    binary_types: str | None
     output_dest: str
-    uri_template: str
+    uri_template: str | None
     uris: list[str]
-    key: str
+    key: str | None
 
     def __post_init__(self):
         if self.binary_types:

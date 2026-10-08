@@ -90,7 +90,7 @@ class LazyGroup(click.Group):
     '--on-behalf-of', 'delegated_user', help='Delegate repository operations to this username.', metavar='USERNAME'
 )
 @click.pass_context
-def main(ctx: click.Context, config_file, verbose, quiet, delegated_user):
+def main(ctx: click.Context, config_file, verbose: bool, quiet: bool, delegated_user: str | None):
     config = cast(dict[str, Any], envsubst(yaml.safe_load(config_file)))
     plastron_context = PlastronContext(config=config, delegated_user=delegated_user)
     ctx.obj = plastron_context

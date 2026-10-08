@@ -44,7 +44,17 @@ def test_find(datadir, repo, simulate_repo, matcher, properties, expected_count)
             ['/container/1'],
         ),
         (
-            ['--recursive', 'ldp:contains', '--data-property', 'dcterms:title', 'Moonpig', '--rdf-type', 'pcdm:Object', '--match-any', '/container'],
+            [
+                '--recursive',
+                'ldp:contains',
+                '--data-property',
+                'dcterms:title',
+                'Moonpig',
+                '--rdf-type',
+                'pcdm:Object',
+                '--match-any',
+                '/container',
+            ],
             ['/container/1', '/container/2'],
         ),
     ],

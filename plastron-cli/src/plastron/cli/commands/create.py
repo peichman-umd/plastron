@@ -1,11 +1,10 @@
 import logging
-from argparse import Namespace
 from pathlib import Path
 
+import click
 from rdflib import Graph, Literal, URIRef
 
-from plastron.cli import parse_data_property, parse_object_property
-from plastron.cli.commands import BaseCommand
+from plastron.cli import parse_data_property, parse_object_property, option
 from plastron.namespaces import dcterms, get_manager, pcdm, rdf
 from plastron.utils import uri_or_curie
 
@@ -14,89 +13,62 @@ logger = logging.getLogger(__name__)
 manager = get_manager()
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(name='create', description='Create a resource in the repository')
-    parser.add_argument(
-        '-D',
-        '--data-property',
-        help='an RDF data property to set on the newly created resource; VALUE is treated as a Literal; repeatable',
-        action='append',
-        nargs=2,
-        dest='data_properties',
-        metavar=('PREDICATE', 'VALUE'),
-        default=[],
-    )
-    parser.add_argument(
-        '-O',
-        '--object-property',
-        help=(
-            'an RDF object property to set on the newly created resource; '
-            'VALUE is treated as a CURIE or URIRef; repeatable'
-        ),
-        action='append',
-        nargs=2,
-        dest='object_properties',
-        metavar=('PREDICATE', 'VALUE'),
-        default=[],
-    )
-    parser.add_argument(
-        '-T',
-        '--rdf-type',
-        help=(
-            'RDF type to add to the newly created resource; equivalent to '
-            '"-O rdf:type TYPE"; TYPE is treated as a CURIE or URIRef; '
-            'repeatable'
-        ),
-        action='append',
-        dest='types',
-        metavar='TYPE',
-        default=[],
-    )
-    parser.add_argument(
-        '--collection',
-        help='shortcut for "-T pcdm:collection -D dcterms:title NAME"',
-        metavar='NAME',
-        action='store',
-        dest='collection_name',
-    )
-    parser.add_argument(
-        '--archival-group',
-        help='create this resource as an Archival Group (Fedora 6+ only)',
-        action='store_true',
-    )
-    container_or_path = parser.add_mutually_exclusive_group(required=True)
-    container_or_path.add_argument('path', nargs='?', help='path to the new resource', action='store')
-    container_or_path.add_argument(
-        '--container',
-        help=(
-            'parent container for the new resource; use this to create a new '
-            'resource with a repository-generated identifier'
-        ),
-        metavar='PATH',
-        action='store',
-    )
-    parser.set_defaults(cmd_name='create')
+@click.command(help='Create a resource in the repository')
+@option.data_properties(
+    help='An RDF data property to set on the newly created resource; VALUE is treated as a Literal; repeatable.'
+)
+@option.object_properties(
+    help='An RDF object property to set on the newly created resource; VALUE is treated as a CURIE or URIRef; repeatable.'
+)
+@option.types(
+    help='RDF type to add to the newly created resource; equivalent to "-O rdf:type TYPE"; TYPE is treated as a CURIE or URIRef; repeatable.'
+)
+@click.option(
+    '--collection',
+    'collection_name',
+    help='Shortcut for "-T pcdm:collection -D dcterms:title NAME".',
+    metavar='NAME',
+)
+@click.option(
+    '--archival-group',
+    help='Create this resource as an Archival Group (Fedora 6+ only).',
+    is_flag=True,
+)
+@click.option(
+    '--container',
+    help='Parent container for the new resource; use this to create a new resource with a repository-generated identifier.',
+    metavar='PATH',
+)
+@click.argument('path', help='Path to the new resource.', required=False)
+@click.help_option('--help', '-h')
+@click.pass_context
+def create_command(
+    ctx: click.Context,
+    data_properties: list[tuple[str, str]],
+    object_properties: list[tuple[str, str]],
+    types: list[str],
+    collection_name: str | None,
+    archival_group: bool,
+    container: str | None,
+    path: str | None,
+):
+    properties: list[tuple[URIRef, Literal | URIRef]] = [
+        *(parse_data_property(p, o) for p, o in data_properties),
+        *(parse_object_property(p, o) for p, o in object_properties),
+    ]
 
+    if collection_name is not None:
+        properties.append((rdf.type, pcdm.Collection))
+        properties.append((dcterms.title, Literal(collection_name)))
 
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        properties: list[tuple[URIRef, Literal | URIRef]] = [
-            *(parse_data_property(p, o) for p, o in args.data_properties),
-            *(parse_object_property(p, o) for p, o in args.object_properties),
-        ]
+    for rdf_type in types:
+        properties.append((rdf.type, uri_or_curie(rdf_type)))
 
-        if args.collection_name is not None:
-            properties.append((rdf.type, pcdm.Collection))
-            properties.append((dcterms.title, Literal(args.collection_name)))
+    graph = Graph(namespace_manager=manager)
+    for p, o in properties:
+        graph.add((URIRef(''), p, o))
 
-        for rdf_type in args.types:
-            properties.append((rdf.type, uri_or_curie(rdf_type)))
-
-        graph = Graph(namespace_manager=manager)
-        for p, o in properties:
-            graph.add((URIRef(''), p, o))
-
-        if args.path is not None:
-            self.context.client.create_at_path(Path(args.path), graph, archival_group=args.archival_group)
-        elif args.container is not None:
-            self.context.client.create_in_container(Path(args.container), graph, archival_group=args.archival_group)
+    if path is not None:
+        ctx.obj.client.create_at_path(Path(path), graph, archival_group=archival_group)
+    elif container is not None:
+        ctx.obj.client.create_in_container(Path(container), graph, archival_group=archival_group)

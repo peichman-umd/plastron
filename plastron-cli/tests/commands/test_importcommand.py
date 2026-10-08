@@ -22,7 +22,9 @@ def test_cannot_resume_without_job_id(runner, config_file_name):
 def test_cannot_resume_without_job_directory(runner, datadir):
     # Verifies that the import command throws RuntimeError when resuming a
     # job and the directory associated with job id is not found
-    result = runner.invoke(main, ['-c', datadir / 'nonexistent-jobs-dir/plastron.yml', 'import', '--resume', '--job-id', str(uuid4())])
+    result = runner.invoke(
+        main, ['-c', datadir / 'nonexistent-jobs-dir/plastron.yml', 'import', '--resume', '--job-id', str(uuid4())]
+    )
     assert result.exit_code != 0
     assert isinstance(result.exception, JobNotFoundError)
     assert 'does not exist' in str(result.exception)
@@ -34,13 +36,21 @@ def test_cannot_resume_without_config_file(runner, datadir):
     job_id = str(uuid4())
     with tempfile.TemporaryDirectory() as tmpdirname:
         with (datadir / 'no-job-config/plastron.yml').open(mode='w') as fh:
-            yaml.dump({'REPOSITORY': {'REST_ENDPOINT': 'http://localhost:9999'}, 'COMMANDS': {'IMPORT': {'JOBS_DIR': tmpdirname}}}, stream=fh)
+            yaml.dump(
+                {
+                    'REPOSITORY': {'REST_ENDPOINT': 'http://localhost:9999'},
+                    'COMMANDS': {'IMPORT': {'JOBS_DIR': tmpdirname}},
+                },
+                stream=fh,
+            )
 
         # Make subdirectory in tmpdirname for job
         job_dir = os.path.join(tmpdirname, job_id)
         os.mkdir(job_dir)
 
-        result = runner.invoke(main, ['-c', datadir / 'no-job-config/plastron.yml', 'import', '--resume', '--job-id', job_id])
+        result = runner.invoke(
+            main, ['-c', datadir / 'no-job-config/plastron.yml', 'import', '--resume', '--job-id', job_id]
+        )
         assert result.exit_code != 0
         assert isinstance(result.exception, JobConfigError)
         assert 'config.yml is missing' in str(result.exception)
@@ -49,7 +59,9 @@ def test_cannot_resume_without_config_file(runner, datadir):
 def test_model_is_required_unless_resuming(runner, datadir, config_file_name):
     # Verifies that the import command throws RuntimeError if model
     # is not provided when not resuming
-    result = runner.invoke(main, ['-c', config_file_name, 'import', '--container', 'test_container', str(datadir / 'import.csv')])
+    result = runner.invoke(
+        main, ['-c', config_file_name, 'import', '--container', 'test_container', str(datadir / 'import.csv')]
+    )
     assert result.exit_code != 0
     assert isinstance(result.exception, RuntimeError)
     assert 'A model is required unless resuming an existing job' in str(result.exception)
@@ -192,7 +204,9 @@ def test_container_is_required_unless_resuming(runner, datadir, config_file_name
 def test_make_template(runner, config_file_name, plastron_context, model_name, expected_header_fields):
     template_file = tempfile.NamedTemporaryFile(delete=False)
 
-    result = runner.invoke(main, ['-c', config_file_name, 'import', '--make-template', template_file.name, '--model', model_name])
+    result = runner.invoke(
+        main, ['-c', config_file_name, 'import', '--make-template', template_file.name, '--model', model_name]
+    )
     assert result.exit_code == 0
 
     with open(template_file.name, 'r') as template_file:
