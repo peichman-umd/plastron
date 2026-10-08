@@ -1,50 +1,40 @@
 import logging
-from argparse import FileType, Namespace
-from collections.abc import Iterable
+from itertools import chain
 
-from plastron.cli import get_uris
-from plastron.cli.commands import BaseCommand
+import click
+
+from plastron.cli import option, argument
 from plastron.repo import RepositoryError
 from plastron.repo.publish import PublishableResource
 
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(
-        name='unpublish',
-        description='Unpublish digital objects',
-    )
-    hide_or_show = parser.add_mutually_exclusive_group()
-    hide_or_show.add_argument(
-        '--hidden',
-        action='store_true',
-        help='set the "Hidden" state on these objects',
-    )
-    hide_or_show.add_argument(
-        '--visible',
-        action='store_true',
-        help='remove the "Hidden" state from these objects',
-    )
-    parser.add_argument(
-        '-f', '--uris-file', action='store', type=FileType(), help='file containing URIs of objects to publish'
-    )
-    parser.add_argument(
-        'uris',
-        nargs='*',
-    )
-    parser.set_defaults(cmd_name='unpublish')
-
-
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        # mimicking a click.Context object to bridge between argparse and click commands
-        ctx = Namespace(obj=self.context)
-        return unpublish(ctx, uris=get_uris(args), force_hidden=args.hidden, force_visible=args.visible)
-
-
-def unpublish(ctx, uris: Iterable[str], force_hidden: bool = False, force_visible: bool = False):
-    for uri in uris:
+@click.command(help='Unpublish digital objects')
+@click.option(
+    '--hidden',
+    'force_hidden',
+    is_flag=True,
+    help='Set the "Hidden" state on these objects.',
+)
+@click.option(
+    '--visible',
+    'force_visible',
+    is_flag=True,
+    help='Remove the "Hidden" state from these objects.',
+)
+@option.uris_file(help='File containing URIs of objects to publish.')
+@argument.uris(help='URIs of objects to publish.')
+@click.help_option('-h', '--help')
+@click.pass_context
+def unpublish_command(
+    ctx: click.Context,
+    force_hidden: bool,
+    force_visible: bool,
+    uris_file,
+    uris: list[str],
+):
+    for uri in chain(uris_file or [], uris):
         # get the resource and check for an existing handle and current publication status
         try:
             resource: PublishableResource = ctx.obj.repo[uri:PublishableResource].read()

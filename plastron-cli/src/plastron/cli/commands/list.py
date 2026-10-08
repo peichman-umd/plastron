@@ -2,6 +2,7 @@ import logging
 
 import click
 
+from plastron.cli import argument
 from plastron.models.ldp import LDPContainer
 from plastron.models.pcdm import PCDMObject
 from plastron.repo import RepositoryError
@@ -11,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 @click.command(help='List objects in the repository')
 @click.option('--long', '-l', is_flag=True, help='Display additional information besides the URI.')
-@click.argument('uris', nargs=-1, metavar='[URI [URIs...]]', help='URIs of repository objects to list.')
+@argument.uris(help='URIs of repository objects to list.')
 @click.pass_context
-def ls_command(ctx: click.Context, long, uris):
+def ls_command(ctx: click.Context, long: bool, uris: list[str]):
     # default to list the repo root
     for uri in uris or ['/']:
         resource = ctx.obj.repo.get_resource(uri)

@@ -39,9 +39,22 @@ test = [
 plastron = "plastron.cli:main"
 
 [project.entry-points.plastron_commands]
+attach = "plastron.cli.commands.attach:attach_command"
+create = "plastron.cli.commands.create:create_command"
+delete = "plastron.cli.commands.delete:delete_command"
+export = "plastron.cli.commands.export:export_command"
 find = "plastron.cli.commands.find:find_command"
+fixpageorder = "plastron.cli.commands.fixpageorder:fixpageorder_command"
+fixitycheck = "plastron.cli.commands.fixitycheck:fixitycheck_command"
 import = "plastron.cli.commands.importcommand:import_command"
 ls = "plastron.cli.commands.list:ls_command"
+ping = "plastron.cli.commands.ping:ping_command"
+publish = "plastron.cli.commands.publish:publish_command"
+reindex = "plastron.cli.commands.reindex:reindex_command"
+replace = "plastron.cli.commands.replace:replace_command"
+set = "plastron.cli.commands.set:set_command"
+unpublish = "plastron.cli.commands.unpublish:unpublish_command"
+update = "plastron.cli.commands.update:update_command"
 
 [build-system]
 requires = ["setuptools>=66.1.0"]

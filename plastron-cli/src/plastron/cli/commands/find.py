@@ -4,8 +4,8 @@ from collections.abc import Callable, Iterable, Iterator
 import click
 from rdflib import Literal, URIRef
 
-from plastron.cli import parse_data_property, parse_object_property
-from plastron.namespaces import get_manager, rdf, ldp
+from plastron.cli import parse_data_property, parse_object_property, option, argument
+from plastron.namespaces import get_manager, rdf
 from plastron.repo import RepositoryResource
 from plastron.utils import parse_predicate_list, uri_or_curie
 
@@ -14,25 +14,9 @@ manager = get_manager()
 
 
 @click.command(help='Find objects in the repository')
-@click.option(
-    '-D',
-    '--data-property',
-    'data_properties',
-    type=(str, str),
-    multiple=True,
-    metavar='PREDICATE VALUE',
-    help='An RDF data property to match; VALUE is treated as a Literal; repeatable.',
-)
-@click.option(
-    '-O',
-    '--object-property',
-    'object_properties',
-    type=(str, str),
-    multiple=True,
-    metavar='PREDICATE VALUE',
-    help='An RDF object property to match; VALUE is treated as a CURIE or URIRef; repeatable.',
-)
-@click.option('-T', '--rdf-type', 'types', multiple=True, metavar='TYPE')
+@option.data_properties(help='An RDF data property to match; VALUE is treated as a Literal; repeatable.')
+@option.object_properties(help='An RDF object property to match; VALUE is treated as a CURIE or URIRef; repeatable.')
+@option.types(help='An RDF type to match; shorthand for "-O rdf:type TYPE"; repeatable.')
 @click.option(
     '--match-all',
     is_flag=True,
@@ -41,10 +25,20 @@ manager = get_manager()
 @click.option(
     '--match-any', is_flag=True, help='Require at least one property to match to include a resource in the result list.'
 )
-@click.option('-R', '--recursive', help='Search additional objects found by traversing the given predicate(s).')
-@click.argument('uris', nargs=-1, metavar='[URI [URIs...]]', help='Search starting at this URI in the repository; repeatable.')
+@option.recursive()
+@argument.uris(help='Search starting at this URI in the repository; repeatable. Defaults to the repository root ("/").')
+@click.help_option('--help', '-h')
 @click.pass_context
-def find_command(ctx: click.Context, data_properties, object_properties, types, match_all, match_any, recursive, uris):
+def find_command(
+    ctx: click.Context,
+    data_properties: list[tuple[str, str]],
+    object_properties: list[tuple[str, str]],
+    types: list[str],
+    match_all: bool,
+    match_any: bool,
+    recursive: str | None,
+    uris: list[str],
+):
     properties: list[tuple[URIRef, Literal | URIRef]] = [
         *(parse_data_property(p, o) for p, o in data_properties),
         *(parse_object_property(p, o) for p, o in object_properties),

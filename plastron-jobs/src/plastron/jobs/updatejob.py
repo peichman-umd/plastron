@@ -6,7 +6,7 @@ from email.utils import parsedate_to_datetime
 from typing import Any
 
 from pyparsing import ParseException
-from rdflib import URIRef
+from rdflib import Node
 
 from plastron.client import ClientError
 from plastron.jobs.logs import AppendableSequence, NullLog
@@ -85,9 +85,9 @@ class UpdateJob:
     repo: Repository
     uris: Iterable[str]
     sparql_update: str
-    model_class: type[RDFResourceBase]
-    traverse: list[URIRef] = None
-    completed: AppendableSequence = None
+    model_class: type[RDFResourceBase] | None
+    traverse: list[Node | str | None] | None = None
+    completed: AppendableSequence | None = None
     dry_run: bool = False
     use_transactions: bool = True
 

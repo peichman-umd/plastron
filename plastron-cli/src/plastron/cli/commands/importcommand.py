@@ -140,30 +140,34 @@ def parse_model_header_map(model_class):
     type=click.File(mode='r'),
     required=False,
 )
+@click.help_option('--help', '-h')
 @click.pass_context
 def import_command(
     ctx: click.Context,
-    model,
-    limit,
-    percentage,
-    validate_only,
+    model: str | None,
+    limit: int | None,
+    percentage: int | None,
+    validate_only: bool,
     template_file,
-    convert_from,
-    convert_params,
-    access,
-    member_of,
-    binaries_location,
-    container,
-    job_id,
-    resume,
-    extract_text_types,
-    file_grouping_strategy,
-    use_archival_groups,
-    publish,
+    convert_from: str | None,
+    convert_params: list[tuple[str, str]],
+    access: str | None,
+    member_of: str | None,
+    binaries_location: str | None,
+    container: str | None,
+    job_id: str | None,
+    resume: bool,
+    extract_text_types: str | None,
+    file_grouping_strategy: str,
+    use_archival_groups: bool,
+    publish: bool,
     import_file,
 ):
     """Performs the import."""
+
     if template_file is not None:
+        if model is None:
+            raise RuntimeError('A model is required for writing the template file')
         write_model_template(model, template_file)
         return
 

@@ -1,7 +1,8 @@
 import logging
-from argparse import Namespace
 
-from plastron.cli.commands import BaseCommand
+import click
+
+from plastron.cli import option
 from plastron.files import USAGE_TAGS, LocalFileSource
 from plastron.repo import Repository, RepositoryError
 from plastron.repo.pcdm import PCDMFileBearingResource
@@ -9,54 +10,36 @@ from plastron.repo.pcdm import PCDMFileBearingResource
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(name='attach', description='Attach a binary to a resource in the repository')
-    parser.add_argument(
-        '--binary-file',
-        help='local path to the binary file',
-    )
-    parser.add_argument(
-        '--mime-type',
-        help='use this MIME type instead of auto-detecting based on the BINARY_FILE',
-    )
-    parser.add_argument(
-        '--slug',
-        help='use this as the resource slug instead of a randomly generated string',
-    )
-    parser.add_argument(
-        '--usage',
-        choices=USAGE_TAGS.keys(),
-        help='the purpose of this binary',
-    )
-    parser.add_argument(
-        'location',
-        help='URI or repository path of the resource to attach the BINARY_FILE to',
-        metavar='URI|PATH',
-    )
-    parser.set_defaults(cmd_name='attach')
-
-
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        # mimicking a click.Context object to bridge between argparse and click commands
-        ctx = Namespace(obj=self.context)
-        attach(
-            ctx,
-            location=args.location,
-            binary_filename=args.binary_file,
-            slug=args.slug,
-            mime_type=args.mime_type,
-            usage=args.usage,
-        )
-
-
-def attach(
-    ctx,
+@click.command(help='Attach a binary to a resource in the repository')
+@option.binary_filename(help='Local path to the binary file.')
+@click.option(
+    '--mime-type',
+    metavar='MIME_TYPE',
+    help='Use this MIME type instead of auto-detecting based on the BINARY_FILE.',
+)
+@click.option(
+    '--slug',
+    help='Use this as the resource slug instead of a randomly generated string.',
+)
+@click.option(
+    '--usage',
+    type=click.Choice(USAGE_TAGS.keys()),
+    help='The purpose of this binary.',
+)
+@click.argument(
+    'location',
+    metavar='URI|PATH',
+    help='The URI or repository path of the resource to attach the BINARY_FILE to.',
+)
+@click.help_option('--help', '-h')
+@click.pass_context
+def attach_command(
+    ctx: click.Context,
     location: str,
     binary_filename: str,
-    slug: str | None = None,
-    mime_type: str | None = None,
-    usage: str | None = None,
+    slug: str | None,
+    mime_type: str | None,
+    usage: str | None,
 ):
     repo: Repository = ctx.obj.repo
     try:
@@ -78,7 +61,7 @@ def attach(
                 mime_type=mime_type,
             )
 
-        print(file_resource.url)
+        click.echo(file_resource.url)
 
     except RepositoryError as e:
         raise RuntimeError(str(e)) from e

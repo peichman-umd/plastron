@@ -1,10 +1,10 @@
 import logging
 import re
-from argparse import FileType, Namespace
-from collections.abc import Iterable
+from itertools import chain
 
-from plastron.cli import get_uris
-from plastron.cli.commands import BaseCommand
+import click
+
+from plastron.cli import argument, option
 from plastron.models.ore import Proxy
 from plastron.repo import RepositoryResource
 from plastron.repo.pcdm import PCDMObjectResource
@@ -12,38 +12,20 @@ from plastron.repo.pcdm import PCDMObjectResource
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(
-        name='fixpageorder',
-        description='Fix the order of pages in an object, using the page titles as a guide',
-    )
-    parser.add_argument(
-        '-f', '--uris-file', action='store', type=FileType(), help='file containing URIs of objects to fix'
-    )
-    parser.add_argument(
-        '-n',
-        '--dry-run',
-        action='store_true',
-        help='dry run; do not actually modify the pages',
-    )
-    parser.add_argument(
-        'uris',
-        nargs='*',
-        help='URIs of objects to fix',
-    )
-    parser.set_defaults(cmd_name='fixpageorder')
-
-
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        # mimicking a click.Context object to bridge between argparse and click commands
-        ctx = Namespace(obj=self.context)
-        return fix_page_order(ctx, uris=get_uris(args), dry_run=args.dry_run)
-
-
-def fix_page_order(ctx: Namespace, uris: Iterable[str], dry_run: bool = False):
+@click.command(help='Fix the order of pages in an object, using the page titles as a guide')
+@option.dry_run()
+@option.uris_file(help='File containing URIs of objects to fix.')
+@argument.uris(help='URIs of objects to fix')
+@click.help_option('-h', '--help')
+@click.pass_context
+def fixpageorder_command(
+    ctx: click.Context,
+    dry_run: bool,
+    uris_file,
+    uris: list[str],
+):
     page_pattern = re.compile(r'page (\d+)', re.IGNORECASE)
-    for uri in uris:
+    for uri in chain(uris_file or [], uris):
         logger.info(f'Retrieving {uri}...')
         resource = ctx.obj.repo.get_resource(uri, PCDMObjectResource)
         proxy_by_page: dict[int, Proxy] = {}
