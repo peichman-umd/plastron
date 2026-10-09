@@ -25,11 +25,11 @@ DEFAULT_LOGGING_OPTIONS = {
             'formatter': 'messageonly',
             'stream': 'ext://sys.stderr',
         },
-        'file': {'class': 'logging.FileHandler', 'level': 'DEBUG', 'formatter': 'full'},
+        #'file': {'class': 'logging.FileHandler', 'level': 'DEBUG', 'formatter': 'full'},
     },
     'loggers': {
-        '__main__': {'level': 'DEBUG', 'handlers': ['console', 'file'], 'propagate': False},
-        'plastron': {'level': 'DEBUG', 'handlers': ['console', 'file'], 'propagate': False},
+        '__main__': {'level': 'DEBUG', 'handlers': ['console'], 'propagate': False},
+        'plastron': {'level': 'DEBUG', 'handlers': ['console'], 'propagate': False},
         # suppress logging output from paramiko by default
         'paramiko': {'propagate': False},
     },
