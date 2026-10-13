@@ -4,7 +4,7 @@ from argparse import Namespace
 from bs4 import BeautifulSoup
 from rdflib import URIRef
 
-from plastron.cli import get_uris
+from plastron.cli.utils import get_uris
 from plastron.cli.commands import BaseCommand
 from plastron.models.annotations import FullTextAnnotation, TextualBody
 from plastron.namespaces import sc

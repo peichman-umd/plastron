@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from lxml import etree
 
-from plastron.cli import get_uris
+from plastron.cli.utils import get_uris
 from plastron.cli.commands import BaseCommand
 from plastron.jobs import ItemLog
 from plastron.models.annotations import TextblockOnPage

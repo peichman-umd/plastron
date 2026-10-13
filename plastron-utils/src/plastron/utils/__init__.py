@@ -25,7 +25,6 @@ DEFAULT_LOGGING_OPTIONS = {
             'formatter': 'messageonly',
             'stream': 'ext://sys.stderr',
         },
-        #'file': {'class': 'logging.FileHandler', 'level': 'DEBUG', 'formatter': 'full'},
     },
     'loggers': {
         '__main__': {'level': 'DEBUG', 'handlers': ['console'], 'propagate': False},
@@ -41,7 +40,7 @@ logger = logging.getLogger(__name__)
 def datetimestamp(digits_only: bool = True) -> str:
     """Returns a string containing the current UTC timestamp. By default, it
     is only digits (`20231117151827` vs. `2023-11-17T15:18:27`). If you want
-    the full ISO 8601 representation, set `digits_only` to `True`.
+    the full ISO 8601 representation, set `digits_only` to `False`.
 
     ```pycon
     >>> datetimestamp()
