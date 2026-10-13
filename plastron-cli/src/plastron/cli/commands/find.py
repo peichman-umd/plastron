@@ -4,7 +4,8 @@ from collections.abc import Callable, Iterable, Iterator
 import click
 from rdflib import Literal, URIRef
 
-from plastron.cli import parse_data_property, parse_object_property, option, argument
+from plastron.cli import option, argument
+from plastron.cli.utils import parse_data_property, parse_object_property
 from plastron.namespaces import get_manager, rdf
 from plastron.repo import RepositoryResource
 from plastron.utils import parse_predicate_list, uri_or_curie

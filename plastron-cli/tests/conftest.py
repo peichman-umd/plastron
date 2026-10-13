@@ -3,12 +3,14 @@ from collections.abc import Callable
 from uuid import uuid4
 
 import pytest
+import responses
 from click.testing import CliRunner
-from httpretty import httpretty
 from rdflib import Graph
+from responses import HEAD, GET, POST, PUT, DELETE
 
 from plastron.client import Client, Endpoint
 from plastron.client.auth import get_authenticator
+from plastron.client.utils import fedora_tx
 from plastron.context import PlastronContext
 from plastron.namespaces import fedora
 from plastron.repo import Repository
@@ -17,7 +19,7 @@ from plastron.repo import Repository
 @pytest.fixture
 def repo_base_config():
     """Required parameters for Repository configuration"""
-    return {'REST_ENDPOINT': 'http://localhost:9999', 'RELPATH': '/pcdm', 'LOG_DIR': '/logs', 'AUTH_TOKEN': 'foobar'}
+    return {'REST_ENDPOINT': 'http://example.com/fcrepo/rest', 'AUTH_TOKEN': 'foobar'}
 
 
 @pytest.fixture
@@ -29,12 +31,11 @@ def plastron_context(repo_base_config, repo):
 def endpoint(repo_base_config):
     return Endpoint(
         url=repo_base_config['REST_ENDPOINT'],
-        default_path=repo_base_config['RELPATH'],
     )
 
 
 @pytest.fixture
-def runner() -> CliRunner:
+def cli_runner() -> CliRunner:
     return CliRunner()
 
 
@@ -57,25 +58,33 @@ def repo(client) -> Repository:
 
 
 @pytest.fixture
-def register_root(endpoint: Endpoint):
+def register_root(repo: Repository):
+    txn_triple = f'<{repo["/"].url}> <{fedora.hasTransactionProvider}> <{repo["/fcr:tx"].url}> .'
+
     def _register_root(status: int = 200):
-        httpretty.register_uri(
-            uri=endpoint.url.with_path('/'),
-            method=httpretty.HEAD,
+        responses.add(
+            method=HEAD,
+            url=repo.endpoint.url,
             status=status,
         )
-        httpretty.register_uri(
-            uri=endpoint.url.with_path('/'),
-            method=httpretty.GET,
+        responses.add(
+            method=GET,
+            url=repo.endpoint.url,
             status=status,
-            adding_headers={
-                'Content-Type': 'application/n-triples',
-            },
-            body=(
-                f'<{endpoint.url.with_path("/")}> '
-                f'<{fedora.hasTransactionProvider}> '
-                f'<{endpoint.url.with_path("/fcr:tx")}> .'
-            ),
+            content_type='application/n-triples',
+            body=txn_triple,
+        )
+        responses.add(
+            method=HEAD,
+            url=repo['/'].url,
+            status=status,
+        )
+        responses.add(
+            method=GET,
+            url=repo['/'].url,
+            status=status,
+            content_type='application/n-triples',
+            body=txn_triple,
         )
 
     return _register_root
@@ -96,54 +105,135 @@ def simulate_repo(register_root) -> Callable[[Graph], None]:
             for triple in graph.triples((subject, None, None)):
                 resource_graph.add(triple)
             body = resource_graph.serialize(format='application/n-triples')
-            httpretty.register_uri(
-                method=httpretty.HEAD,
-                uri=subject,
+            responses.add(
+                method=HEAD,
+                url=subject,
                 status=200,
-                adding_headers={
-                    'Content-Type': 'application/n-triples',
-                },
+                content_type='application/n-triples',
             )
-            httpretty.register_uri(
-                method=httpretty.GET,
-                uri=subject,
+            responses.add(
+                method=GET,
+                url=subject,
                 status=200,
                 body=body,
-                adding_headers={
-                    'Content-Type': 'application/n-triples',
-                },
+                content_type='application/n-triples',
             )
 
     return _register_repo
 
 
 @pytest.fixture
-def register_transaction(register_root, endpoint):
-    def _register_transaction():
+def register_resource():
+    def _register_resource(url: str | re.Pattern, response_args: dict[str, dict]):
+        for method, kwargs in response_args.items():
+            responses.add(method=method, url=url, **kwargs)
+    return _register_resource
+
+
+@pytest.fixture
+def register_transactions(register_root, repo):
+    def _register_transactions():
         register_root()
         txn_id = str(uuid4())
-        txn_url = endpoint.url.with_path(f'/tx:{txn_id}')
+        txn_url = repo[f'/tx:{txn_id}'].url
         # creating a new transaction
-        httpretty.register_uri(
-            uri=endpoint.url + '/fcr:tx',
-            method=httpretty.POST,
+        responses.add(
+            url=repo['/fcr:tx'].url,
+            method=POST,
             status=201,
-            adding_headers={
+            headers={
                 'Location': txn_url,
             },
         )
         # maintenance action
-        httpretty.register_uri(
-            uri=txn_url,
-            method=httpretty.POST,
+        responses.add(
+            url=txn_url,
+            method=POST,
             status=204,
         )
         # commit, and rollback actions
-        httpretty.register_uri(
-            uri=re.compile(txn_url + '/fcr:tx/fcr:(commit|rollback)'),
-            method=httpretty.POST,
+        responses.add(
+            url=re.compile(str(txn_url) + '/fcr:tx/fcr:(commit|rollback)'),
+            method=POST,
             status=204,
         )
         return txn_url
 
-    return _register_transaction
+    return _register_transactions
+
+
+@pytest.fixture
+def register_f6_transactions(register_root, register_resource, repo):
+    def _register_f6_transactions():
+        register_root()
+        txn_id = str(uuid4())
+        txn_url = repo[f'/fcr:tx/{txn_id}'].url
+        # creating a new transaction
+        responses.add(
+            url=repo['/fcr:tx'].url,
+            method=POST,
+            status=201,
+            headers={
+                'Link': f'<{txn_url}>; rel="{fedora_tx.commitEndpoint}"',
+                'Location': txn_url,
+            },
+        )
+        register_resource(
+            url=txn_url,
+            response_args={
+                # maintain
+                POST: {'status': 204},
+                # commit
+                PUT: {'status': 204},
+                # rollback
+                DELETE: {'status': 204},
+            },
+        )
+        return txn_url
+
+    return _register_f6_transactions
+
+
+@pytest.fixture
+def register_binary(repo, register_resource):
+    def _register_binary(path: str):
+        url = str(repo[path].url)
+        description_url = f'{url}/fcr:metadata'
+        register_resource(
+            url=url,
+            response_args={
+                HEAD: {
+                    'status': 200,
+                    'headers': {
+                        'Link': f'<{description_url}>; rel="describedby',
+                    },
+                },
+                GET: {
+                    'status': 200,
+                    'body': '',
+                    'headers': {
+                        'Link': f'<{description_url}>; rel="describedby',
+                    },
+                },
+                PUT: {'status': 204, 'body': ''},
+            },
+        )
+        register_resource(
+            url=description_url,
+            response_args={
+                HEAD: {'status': 200},
+                GET: {'status': 200, 'body': '', 'content_type': 'application/n-triples'},
+                PUT: {'status': 204, 'body': ''},
+            },
+        )
+        return url, description_url
+    return _register_binary
+
+
+@pytest.fixture
+def resource_not_found():
+    return {
+        HEAD: {'status': 404},
+        GET: {'status': 404, 'body': ''},
+        DELETE: {'status': 404},
+    }

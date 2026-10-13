@@ -1,129 +1,105 @@
-import argparse
-from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 
 import httpretty
 import pytest
+import responses
+from click.testing import Result
 from httpretty import DELETE, GET, HEAD
 
-from plastron.cli.commands.delete import Command
+from plastron.cli import plastron_command
 from plastron.jobs import ItemLog
-from plastron.repo import RepositoryError
 
 
-def register_responses(responses, uri):
-    for method, kwargs in responses.items():
-        httpretty.register_uri(method=method, uri=uri, **kwargs)
+def is_success(result: Result) -> bool:
+    return result.exit_code == 0
+
+
+def is_not_success(result: Result) -> bool:
+    return result.exit_code != 0
 
 
 @pytest.mark.parametrize(
-    ('path', 'responses', 'expectation'),
+    ('path', 'responses', 'expected'),
     [
         # resource exists, delete successful
         (
-            'ok',
+            '/ok',
             {
                 HEAD: {'status': 200},
                 GET: {'status': 200, 'adding_headers': {'Content-Type': 'application/n-triples'}, 'body': ''},
                 DELETE: {'status': 204},
             },
-            does_not_raise(),
+            is_success,
         ),
         # resource not found
         (
-            'not_found',
+            '/not_found',
             {
                 HEAD: {'status': 404},
                 GET: {'status': 404, 'body': ''},
                 DELETE: {'status': 404},
             },
-            does_not_raise(),
+            is_success,
         ),
         # resource gone
         (
-            'gone',
+            '/gone',
             {
                 HEAD: {'status': 410},
                 GET: {'status': 410, 'body': ''},
                 DELETE: {'status': 410},
             },
-            does_not_raise(),
+            is_success,
         ),
         # resource exists, internal server error while deleting
         (
-            'internal_server_error',
+            '/internal_server_error',
             {
                 HEAD: {'status': 200},
                 GET: {'status': 200, 'adding_headers': {'Content-Type': 'application/n-triples'}, 'body': ''},
                 DELETE: {'status': 500},
             },
-            pytest.raises(RepositoryError),
+            is_not_success,
         ),
         # resource exists, bad request error while deleting
         (
-            'bad_request',
+            '/bad_request',
             {
                 HEAD: {'status': 200},
                 GET: {'status': 200, 'adding_headers': {'Content-Type': 'application/n-triples'}, 'body': ''},
                 DELETE: {'status': 400},
             },
-            pytest.raises(RepositoryError),
+            is_not_success,
         ),
     ],
 )
-@httpretty.activate
-def test_delete_command(plastron_context, register_transaction, register_root, path, responses, expectation):
+@responses.activate
+def test_delete_command(cli_runner, config_file_name, repo, register_root, path, responses, expected, register_resource):
     register_root()
-    txn_url = register_transaction()
-    uri = txn_url.add_path_segment(path)
-    register_responses(
-        uri=uri,
-        responses=responses,
+    register_resource(
+        url=str(repo[path].url),
+        response_args=responses,
     )
-    args = argparse.Namespace(
-        delegated_user=None,
-        completed=None,
-        dry_run=False,
-        uris=[f'/{path}'],
-        use_transactions=True,
-        recursive=None,
-    )
-    plastron_context.args = args
-
-    cmd = Command(context=plastron_context)
-    with expectation:
-        cmd(args)
+    result = cli_runner.invoke(plastron_command, ['-c', config_file_name, 'delete', path])
+    assert expected(result)
 
 
-@httpretty.activate
-def test_completed_log(datadir, repo, plastron_context, register_transaction, register_root):
+@responses.activate
+def test_completed_log(cli_runner, config_file_name, datadir, repo, register_root, register_resource):
     register_root()
-    txn_url = register_transaction()
-    url = txn_url.add_path_segment('test')
     deleted_url = str(repo['/test'].url)
     title_triple = f'<{deleted_url}> <http://purl.org/dc/terms/title> "Test Resource" .'
-    register_responses(
-        uri=url,
-        responses={
+    register_resource(
+        url=deleted_url,
+        response_args={
             HEAD: {'status': 200},
             GET: {'status': 200, 'adding_headers': {'Content-Type': 'application/n-triples'}, 'body': title_triple},
             DELETE: {'status': 204},
         },
     )
     completed_log_path: Path = datadir / 'completed.csv'
-    args = argparse.Namespace(
-        delegated_user=None,
-        completed=completed_log_path,
-        dry_run=False,
-        uris=['/test'],
-        use_transactions=True,
-        recursive=None,
-    )
-    plastron_context.args = args
-
-    cmd = Command(context=plastron_context)
-    cmd(args)
-
+    result = cli_runner.invoke(plastron_command, ['-c', config_file_name, 'delete', '/test', '--completed', str(completed_log_path)])
+    assert result.exit_code == 0
     assert completed_log_path.exists()
     completed_log = ItemLog(filename=completed_log_path, fieldnames=['uri', 'title', 'timestamp'], keyfield='uri')
     assert deleted_url in completed_log

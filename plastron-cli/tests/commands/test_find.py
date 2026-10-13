@@ -1,9 +1,11 @@
 import httpretty
 import pytest
+import responses
 from click.testing import CliRunner
+from pytest_datadir.plugin import shared_datadir
 from rdflib import Graph, Literal
 
-from plastron.cli import main
+from plastron.cli import plastron_command
 from plastron.cli.commands.find import find
 from plastron.namespaces import dcterms, ldp, pcdm, rdf
 
@@ -17,9 +19,9 @@ from plastron.namespaces import dcterms, ldp, pcdm, rdf
         (any, [(rdf.type, pcdm.Object), (dcterms.title, Literal('Moonpig'))], 2),
     ],
 )
-@httpretty.activate
-def test_find(datadir, repo, simulate_repo, matcher, properties, expected_count):
-    graph = Graph().parse(file=(datadir / 'graph.ttl').open())
+@responses.activate
+def test_find(shared_datadir, repo, simulate_repo, matcher, properties, expected_count):
+    graph = Graph().parse(file=(shared_datadir / 'graph.ttl').open())
     simulate_repo(graph)
     resources = list(
         find(
@@ -59,12 +61,12 @@ def test_find(datadir, repo, simulate_repo, matcher, properties, expected_count)
         ),
     ],
 )
-@httpretty.activate
-def test_find_command(datadir, shared_datadir, simulate_repo, args, expected_paths):
-    graph = Graph().parse(file=(datadir / 'graph.ttl').open())
+@responses.activate
+def test_find_command(shared_datadir, simulate_repo, args, expected_paths):
+    graph = Graph().parse(file=(shared_datadir / 'graph.ttl').open())
     simulate_repo(graph)
     runner = CliRunner()
-    result = runner.invoke(main, ['--config', str(shared_datadir / 'plastron.yml'), 'find', *args])
+    result = runner.invoke(plastron_command, ['--config', str(shared_datadir / 'plastron.yml'), 'find', *args])
     assert len(result.stdout.splitlines()) == len(expected_paths)
     for path in expected_paths:
-        assert f'http://localhost:9999{path}\n' in result.stdout
+        assert f'http://example.com/fcrepo/rest{path}\n' in result.stdout

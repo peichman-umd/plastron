@@ -1,7 +1,9 @@
-from argparse import Namespace
 from unittest.mock import MagicMock
 
-from plastron.cli.commands.unpublish import Command, unpublish
+import click
+
+from plastron.cli import plastron_command
+from plastron.cli.commands.unpublish import unpublish_command
 from plastron.client import Client, Endpoint
 from plastron.client.utils import TypedText
 from plastron.context import PlastronContext
@@ -28,23 +30,16 @@ def get_mock_context(obj):
 
 def test_unpublish():
     obj = Item(rdf_type=umdaccess.Published)
-
-    unpublish(
-        Namespace(obj=get_mock_context(obj)),
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-    )
+    ctx = click.Context(command=plastron_command, obj=get_mock_context(obj))
+    ctx.invoke(unpublish_command, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
 
     assert umdaccess.Published not in obj.rdf_type.values
 
 
 def test_unpublish_hidden():
     obj = Item(rdf_type=umdaccess.Published)
-
-    unpublish(
-        Namespace(obj=get_mock_context(obj)),
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-        force_hidden=True,
-    )
+    ctx = click.Context(command=plastron_command, obj=get_mock_context(obj))
+    ctx.invoke(unpublish_command, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'], force_hidden=True)
 
     assert umdaccess.Published not in obj.rdf_type.values
     assert umdaccess.Hidden in obj.rdf_type.values
@@ -52,12 +47,8 @@ def test_unpublish_hidden():
 
 def test_unpublish_make_visible():
     obj = Item(rdf_type=[umdaccess.Published, umdaccess.Hidden])
-
-    unpublish(
-        Namespace(obj=get_mock_context(obj)),
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-        force_visible=True,
-    )
+    ctx = click.Context(command=plastron_command, obj=get_mock_context(obj))
+    ctx.invoke(unpublish_command, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'], force_visible=True)
 
     assert umdaccess.Published not in obj.rdf_type.values
     assert umdaccess.Hidden not in obj.rdf_type.values
@@ -67,17 +58,7 @@ def test_unpublish_repo_error(caplog):
     mock_repo = MagicMock(spec=Repository)
     mock_repo.__getitem__.side_effect = RepositoryError('something bad')
 
-    unpublish(
-        Namespace(obj=MagicMock(spec=PlastronContext, repo=mock_repo)),
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-    )
+    ctx = click.Context(command=plastron_command, obj=MagicMock(spec=PlastronContext, repo=mock_repo))
+    ctx.invoke(unpublish_command, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
+
     assert 'Unable to retrieve http://fcrepo-local:8080/fcrepo/rest/foo: something bad' in caplog.messages
-
-
-def test_unpublish_command_class():
-    obj = Item(rdf_type=umdaccess.Published)
-    cmd = Command(get_mock_context(obj))
-    cmd(Namespace(uris=['http://fcrepo-local:8080/fcrepo/rest/foo'], hidden=False, visible=False))
-
-    assert umdaccess.Published not in obj.rdf_type.values
-    assert umdaccess.Hidden not in obj.rdf_type.values
