@@ -1,2 +1,2 @@
 REPOSITORY:
-  REST_ENDPOINT: http://localhost:9999
+  REST_ENDPOINT: http://example.com/fcrepo/rest

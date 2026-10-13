@@ -32,11 +32,12 @@ dynamic = ["version"]
 test = [
     "pytest",
     "pytest-cov",
+    "responses",
     "ruff",
 ]
 
 [project.scripts]
-plastron = "plastron.cli:main"
+plastron = "plastron.cli:plastron_command"
 
 [project.entry-points.plastron_commands]
 attach = "plastron.cli.commands.attach:attach_command"

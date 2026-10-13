@@ -4,7 +4,8 @@ from pathlib import Path
 import click
 from rdflib import Graph, Literal, URIRef
 
-from plastron.cli import parse_data_property, parse_object_property, option
+from plastron.cli import option
+from plastron.cli.utils import parse_data_property, parse_object_property
 from plastron.namespaces import dcterms, get_manager, pcdm, rdf
 from plastron.utils import uri_or_curie
 

@@ -31,10 +31,7 @@ def replace_command(
     mime_type: str | None,
 ):
     repo: Repository = ctx.obj.repo
-    try:
-        resource = repo.get_resource(location, BinaryResource).read()
-    except RepositoryError as e:
-        raise RuntimeError(str(e)) from e
+    resource = repo.get_resource(location, BinaryResource)
 
     if not resource.exists:
         raise RuntimeError(f'Resource {resource.url} not found')
@@ -43,6 +40,7 @@ def replace_command(
 
     try:
         with repo.transaction():
+            resource.read()
             resource.update_binary(source, mime_type=mime_type)
             logger.info(f'Updating metadata for {resource.url}')
             file = resource.describe(PCDMFile)

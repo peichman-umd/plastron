@@ -3,9 +3,11 @@ from argparse import Namespace
 from random import randint
 from unittest.mock import MagicMock
 
+import click
 import pytest
 
-from plastron.cli.commands.publish import Command, publish
+from plastron.cli import plastron_command
+from plastron.cli.commands.publish import publish_command
 from plastron.client import Client, Endpoint
 from plastron.client.utils import TypedText
 from plastron.context import PlastronContext
@@ -106,7 +108,8 @@ def get_mock_context(obj, path):
 
 def test_publish(handle):
     obj = Item()
-    publish(Namespace(obj=get_mock_context(obj, '/foo')), uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
+    ctx = click.Context(command=plastron_command, obj=get_mock_context(obj, '/foo'))
+    ctx.invoke(publish_command, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
 
     assert umdaccess.Published in obj.rdf_type.values
     assert umdaccess.Hidden not in obj.rdf_type.values
@@ -114,11 +117,8 @@ def test_publish(handle):
 
 def test_publish_hidden(handle):
     obj = Item()
-    publish(
-        Namespace(obj=get_mock_context(obj, '/foo')),
-        force_hidden=True,
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-    )
+    ctx = click.Context(command=plastron_command, obj=get_mock_context(obj, '/foo'))
+    ctx.invoke(publish_command, force_hidden=True, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
 
     assert umdaccess.Published in obj.rdf_type.values
     assert umdaccess.Hidden in obj.rdf_type.values
@@ -126,11 +126,8 @@ def test_publish_hidden(handle):
 
 def test_publish_force_visible(handle):
     obj = Item(rdf_type=umdaccess.Hidden)
-    publish(
-        Namespace(obj=get_mock_context(obj, '/foo')),
-        force_visible=True,
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-    )
+    ctx = click.Context(command=plastron_command, obj=get_mock_context(obj, '/foo'))
+    ctx.invoke(publish_command, force_visible=True, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
 
     assert umdaccess.Published in obj.rdf_type.values
     assert umdaccess.Hidden not in obj.rdf_type.values
@@ -140,17 +137,6 @@ def test_publish_repo_error(caplog):
     mock_repo = MagicMock(spec=Repository)
     mock_repo.__getitem__.side_effect = RepositoryError('something bad')
 
-    publish(
-        Namespace(obj=MagicMock(spec=PlastronContext, repo=mock_repo)),
-        uris=['http://fcrepo-local:8080/fcrepo/rest/foo'],
-    )
+    ctx = click.Context(command=plastron_command, obj=MagicMock(spec=PlastronContext, repo=mock_repo))
+    ctx.invoke(publish_command, uris=['http://fcrepo-local:8080/fcrepo/rest/foo'])
     assert 'Unable to retrieve http://fcrepo-local:8080/fcrepo/rest/foo: something bad' in caplog.messages
-
-
-def test_publish_command_class(handle):
-    obj = Item()
-    cmd = Command(get_mock_context(obj, '/foo'))
-    cmd(Namespace(uris=['http://fcrepo-local:8080/fcrepo/rest/foo'], hidden=False, visible=False))
-
-    assert umdaccess.Published in obj.rdf_type.values
-    assert umdaccess.Hidden not in obj.rdf_type.values

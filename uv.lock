@@ -1271,6 +1271,7 @@ dependencies = [
 test = [
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "responses" },
     { name = "ruff" },
 ]
 
@@ -1290,6 +1291,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "pyyaml" },
     { name = "rdflib" },
+    { name = "responses", marker = "extra == 'test'" },
     { name = "ruff", marker = "extra == 'test'" },
 ]
 provides-extras = ["test"]
@@ -1914,6 +1916,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b3/73/9d7a1295975765a0890149f7b61e024c764ec7bb1df5c56c18b206532033/requests-jwtauth-1.0.1.tar.gz", hash = "sha256:4a33957dfb1f2dbe1609932b8bb78324b20a82304fb6229f992de3638b4f01c2", size = 8056, upload-time = "2024-01-04T19:33:32.93Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/a7/344c4620cb4f41e555a4d7d2405098a9b5eb7eb277a63e61a97b358772e8/requests_jwtauth-1.0.1-py3-none-any.whl", hash = "sha256:2358b346b92f3692d90bec1bfc700df568ef8fbcc7e75ebf1fc772b35bb7ee94", size = 7680, upload-time = "2024-01-04T19:33:31.744Z" },
+]
+
+[[package]]
+name = "responses"
+version = "0.26.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9f/47/f216a33221db8eff328987661cf18371afee89c62a62b434b963d6b509c9/responses-0.26.3.tar.gz", hash = "sha256:b0c11ca8131b8b227b8d5108e6ed39772222bd5aab030ed430e8f99057c4c409", size = 86335, upload-time = "2026-08-26T19:17:24.373Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/86/ca7958de70cb0752350575e98229368a3a2f746a2942034b3364e17312bb/responses-0.26.3-py3-none-any.whl", hash = "sha256:74474f799334ac4f37d93b6437ecc3bb1bb5c77a8d31780a338643be2dce0af8", size = 36289, upload-time = "2026-08-26T19:17:23.176Z" },
 ]
 
 [[package]]

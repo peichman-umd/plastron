@@ -1,4 +1,4 @@
-@base <http://localhost:9999/> .
+@base <http://example.com/fcrepo/rest/> .
 
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix ldp: <http://www.w3.org/ns/ldp#> .

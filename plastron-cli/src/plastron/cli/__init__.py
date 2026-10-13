@@ -5,8 +5,6 @@ import sys
 from argparse import Namespace
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from importlib import import_module
-from pkgutil import iter_modules
 from typing import Any, cast
 
 import click
@@ -17,33 +15,11 @@ from plastron.utils import (
     DEFAULT_LOGGING_OPTIONS,
     check_python_version,
     envsubst,
-    uri_or_curie,
 )
-from rdflib import Literal, URIRef
-from rdflib.util import from_n3
 
 logger = logging.getLogger(__name__)
 now = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
 version = importlib.metadata.version('plastron-cli')
-
-
-def load_commands(subparsers):
-    # load all defined subcommands from the plastron.commands package, using
-    # introspection
-    command_modules = {}
-    for finder, name, ispkg in iter_modules(commands.__path__):
-        module_name = name
-        if module_name == 'importcommand':
-            # Special case handling for "importcommand", because "import" is
-            # a Python reserved word that is not usable as a module name,
-            # while we want "import" to be the Plastron command
-            name = 'import'
-
-        module = import_module(commands.__name__ + '.' + module_name)
-        if hasattr(module, 'configure_cli'):
-            module.configure_cli(subparsers)
-            command_modules[name] = module
-    return command_modules
 
 
 def get_uris(args: Namespace) -> Iterable[str]:
@@ -90,7 +66,7 @@ class LazyGroup(click.Group):
     '--on-behalf-of', 'delegated_user', help='Delegate repository operations to this username.', metavar='USERNAME'
 )
 @click.pass_context
-def main(ctx: click.Context, config_file, verbose: bool, quiet: bool, delegated_user: str | None):
+def plastron_command(ctx: click.Context, config_file, verbose: bool, quiet: bool, delegated_user: str | None):
     config = cast(dict[str, Any], envsubst(yaml.safe_load(config_file)))
     plastron_context = PlastronContext(config=config, delegated_user=delegated_user)
     ctx.obj = plastron_context
@@ -263,13 +239,3 @@ class ConfigError(Exception):
 
     def __str__(self):
         return self.message
-
-
-def parse_data_property(p: str, o: str) -> tuple[URIRef, Literal]:
-    """Convert a pair of strings to a URIRef predicate and Literal object."""
-    return uri_or_curie(p), Literal(from_n3(o))
-
-
-def parse_object_property(p: str, o: str) -> tuple[URIRef, URIRef]:
-    """Convert a pair of strings to a URIRef predicate and URIRef object."""
-    return uri_or_curie(p), uri_or_curie(o)

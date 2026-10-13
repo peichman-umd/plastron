@@ -53,10 +53,10 @@ def update_command(
     uris_file,
     uris: list[str],
 ):
-    ctx.obj.client.test_connection()
-
     if validate and model is None:
         raise RuntimeError('Model must be provided when performing validation')
+
+    ctx.obj.client.test_connection()
 
     # Retrieve the model to use for validation
     model_class = get_model_from_name(model) if model else None

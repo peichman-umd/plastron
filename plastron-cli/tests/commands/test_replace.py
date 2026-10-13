@@ -1,9 +1,10 @@
-from argparse import Namespace
 from unittest.mock import MagicMock
 
+import click
 import pytest
 
-from plastron.cli.commands.replace import replace
+from plastron.cli import plastron_command
+from plastron.cli.commands.replace import replace_command
 from plastron.context import PlastronContext
 from plastron.files import BinaryResource
 from plastron.models.pcdm import PCDMFile
@@ -16,9 +17,9 @@ def test_replace_repository_error():
     mock_repo = MagicMock(spec=Repository)
     mock_repo.get_resource.return_value = mock_resource
     mock_context = MagicMock(spec=PlastronContext, repo=mock_repo)
-    ctx = Namespace(obj=mock_context)
+    ctx = click.Context(command=plastron_command, obj=mock_context)
     with pytest.raises(RuntimeError):
-        replace(ctx, '/foo', 'bar.jpg')
+        ctx.invoke(replace_command, location='/foo', binary_filename='bar.jpg')
 
 
 def test_replace_resource_does_not_exist():
@@ -27,9 +28,9 @@ def test_replace_resource_does_not_exist():
     mock_repo = MagicMock(spec=Repository)
     mock_repo.get_resource.return_value = mock_resource
     mock_context = MagicMock(spec=PlastronContext, repo=mock_repo)
-    ctx = Namespace(obj=mock_context)
+    ctx = click.Context(command=plastron_command, obj=mock_context)
     with pytest.raises(RuntimeError):
-        replace(ctx, '/foo', 'bar.jpg')
+        ctx.invoke(replace_command, location='/foo', binary_filename='bar.jpg')
 
 
 def test_replace_resource_update_binary_failure():
@@ -39,9 +40,9 @@ def test_replace_resource_update_binary_failure():
     mock_repo = MagicMock(spec=Repository)
     mock_repo.get_resource.return_value = mock_resource
     mock_context = MagicMock(spec=PlastronContext, repo=mock_repo)
-    ctx = Namespace(obj=mock_context)
+    ctx = click.Context(command=plastron_command, obj=mock_context)
     with pytest.raises(RuntimeError):
-        replace(ctx, '/foo', 'bar.jpg')
+        ctx.invoke(replace_command, location='/foo', binary_filename='bar.jpg')
 
 
 def test_replace():
@@ -52,8 +53,8 @@ def test_replace():
     mock_repo = MagicMock(spec=Repository)
     mock_repo.get_resource.return_value = mock_resource
     mock_context = MagicMock(spec=PlastronContext, repo=mock_repo)
-    ctx = Namespace(obj=mock_context)
-    replace(ctx, '/foo', 'bar.jpg')
+    ctx = click.Context(command=plastron_command, obj=mock_context)
+    ctx.invoke(replace_command, location='/foo', binary_filename='bar.jpg')
     mock_resource.update.assert_called_once()
     mock_resource.update_binary.assert_called_once()
     assert str(file_obj.title) == 'bar.jpg'
