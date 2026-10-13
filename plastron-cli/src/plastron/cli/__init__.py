@@ -2,61 +2,25 @@ import importlib.metadata
 import logging
 import logging.config
 import sys
-from argparse import Namespace
-from collections.abc import Iterable
-from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, cast
 
 import click
 import yaml
 from plastron.cli import commands
+from plastron.cli.utils import EntryPointsGroup
 from plastron.context import PlastronContext
 from plastron.utils import (
     DEFAULT_LOGGING_OPTIONS,
     check_python_version,
-    envsubst,
+    envsubst, datetimestamp,
 )
 
 logger = logging.getLogger(__name__)
-now = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
 version = importlib.metadata.version('plastron-cli')
 
 
-def get_uris(args: Namespace) -> Iterable[str]:
-    if hasattr(args, 'uris_file') or hasattr(args, 'uris'):
-        if hasattr(args, 'uris_file') and args.uris_file is not None:
-            yield from (line.rstrip() for line in args.uris_file)
-        if hasattr(args, 'uris') and args.uris is not None:
-            yield from args.uris
-    else:
-        # fall back to STDIN
-        yield from (line.rstrip() for line in sys.stdin)
-
-
-class LazyGroup(click.Group):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def __call__(self, *args, **kwargs):
-        try:
-            return self.main(*args, **kwargs)
-        except RuntimeError as e:
-            logger.error(str(e))
-            raise SystemExit(1)
-
-    def list_commands(self, ctx):
-        base = super().list_commands(ctx)
-        return base + [ep.name for ep in importlib.metadata.entry_points(group='plastron_commands')]
-
-    def get_command(self, ctx, cmd_name):
-        try:
-            entrypoint = importlib.metadata.entry_points(group='plastron_commands', name=cmd_name)[0]
-            return entrypoint.load()
-        except IndexError:
-            return super().get_command(ctx, cmd_name)
-
-
-@click.group(cls=LazyGroup, help='CLI tool for working with a Fedora repository', name='plastron')
+@click.group(cls=EntryPointsGroup, help='CLI tool for working with a Fedora repository', name='plastron', entry_points_group='plastron_commands')
 @click.help_option('--help', '-h')
 @click.version_option(version, '--version', '-V')
 @click.option('-c', '--config', 'config_file', type=click.File(mode='r'), help='Path to configuration file.')
@@ -70,8 +34,10 @@ def plastron_command(ctx: click.Context, config_file, verbose: bool, quiet: bool
     config = cast(dict[str, Any], envsubst(yaml.safe_load(config_file)))
     plastron_context = PlastronContext(config=config, delegated_user=delegated_user)
     ctx.obj = plastron_context
+
     logging_options = DEFAULT_LOGGING_OPTIONS
 
+    logging_config = config.get('LOGGING', {})
     """
     # TODO: put these into their own "LOGGING" config section
     # get basic logging options
@@ -80,15 +46,21 @@ def plastron_command(ctx: click.Context, config_file, verbose: bool, quiet: bool
             logging_options = yaml.safe_load(logging_config_file)
     else:
         logging_options = DEFAULT_LOGGING_OPTIONS
-
-    # log file configuration
-    log_dirname = repo_config.get('LOG_DIR')
-    if not os.path.isdir(log_dirname):
-        os.makedirs(log_dirname)
-    log_filename = f'plastron.{args.cmd_name}.{now}.log'
-    logfile = os.path.join(log_dirname, log_filename)
-    logging_options['handlers']['file']['filename'] = logfile
     """
+    # log file configuration
+    log_dirname: str | None = logging_config.get('DIR')
+    if log_dirname is not None:
+        log_dir = Path(log_dirname)
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / f'plastron.{ctx.invoked_subcommand}.{datetimestamp()}.log'
+        logging_options['handlers']['file'] = {
+            'class': 'logging.FileHandler',
+            'filename': str(log_file),
+            'level': logging_config.get('LEVEL', 'DEBUG'),
+            'formatter': 'full',
+        }
+        for logger_name in ('__main__', 'plastron'):
+            logging_options['loggers'][logger_name]['handlers'].append('file')
 
     # manipulate console verbosity
     if verbose:
