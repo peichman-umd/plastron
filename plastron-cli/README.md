@@ -503,77 +503,7 @@ optional arguments:
 
 ### Adding Commands
 
-Commands are implemented as a package in `plastron.cli.commands.{cmd_name}`
-that contain, at a minimum, a function named `configure_cli` and a class
-named `Command`.
-
-The `configure_cli` function takes an [argparse subparsers object] and
-creates and configures a subparser to handle its specific command-line
-arguments.
-
-The `Command` class should inherit from `plastron.cli.BaseCommand`, and must
-have a `__call__` method that takes an [argparse.Namespace] object, and
-executes the actual command.
-
-For a simple example, see the `list` command, as implemented in
-[`plastron.cli.commands.list`](src/plastron/cli/commands/list.py):
-
-```python
-import logging
-from argparse import Namespace
-
-from plastron.cli.commands import BaseCommand
-from plastron.models.pcdm import PCDMFile
-from plastron.namespaces import ldp
-
-logger = logging.getLogger(__name__)
-
-
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(name='list', aliases=['ls'], description='List objects in the repository')
-    # long mode to print more than just the URIs (name modeled after ls -l)
-    parser.add_argument('-l', '--long', help='Display additional information besides the URI', action='store_true')
-    parser.add_argument('uris', nargs='*', help='URIs of repository objects to list')
-    parser.set_defaults(cmd_name='list')
-
-
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        self.long = args.long
-
-        for uri in args.uris:
-            resource = self.context.repo[uri].read()
-
-            if resource.is_binary:
-                print(uri)
-                continue
-
-            for child_resource in resource.walk(min_depth=1, max_depth=1, traverse=[ldp.contains]):
-                if self.long:
-                    description = child_resource.describe(PCDMFile)
-                    title = str(description.title)
-                    print(f'{child_resource.url} {title}')
-                else:
-                    print(child_resource.url)
-```
-
-The `Command` class has a `context` attribute that contains a 
-`PlastronContext` object. This context object provides the following 
-objects, configured using the current config file and arguments:
-
-| Attribute       | Type                                 |
-|-----------------|--------------------------------------|
-| `endpoint`      | plastron.client.Endpoint             |
-| `client`        | plastron.client.Client               |
-| `repo`          | plastron.repo.Repository             |
-| `broker`        | plastron.stomp.broker.Broker         |
-| `handle_client` | plastron.handles.HandleServiceClient |
-
-Any `RuntimeError` exceptions are caught by the `plastron` script and 
-cause it to exit with a status code of 1. Any `KeyboardInterrupt` 
-exceptions (for instance, due to the user pressing <kbd>Ctrl+C</kbd>) are 
-also caught by the `plastron` script and cause it to exit with a status 
-code of 2.
+TODO: Rewrite using Click
 
 [argparse subparsers object]: https://docs.python.org/3/library/argparse.html#sub-commands
 [argparse.Namespace]: https://docs.python.org/3/library/argparse.html#the-namespace-object
