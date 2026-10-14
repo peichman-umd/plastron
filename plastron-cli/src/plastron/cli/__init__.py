@@ -7,13 +7,13 @@ from typing import Any, cast
 import click
 import yaml
 
-from plastron.cli import commands
 from plastron.cli.utils import EntryPointsGroup
 from plastron.context import PlastronContext
 from plastron.utils import (
     DEFAULT_LOGGING_OPTIONS,
     check_python_version,
-    envsubst, datetimestamp,
+    envsubst,
+    datetimestamp,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,12 @@ def configure_logging(
     logging.config.dictConfig(logging_options)
 
 
-@click.group(cls=EntryPointsGroup, help='CLI tool for working with a Fedora repository', name='plastron', entry_points_group='plastron_commands')
+@click.group(
+    cls=EntryPointsGroup,
+    help='CLI tool for working with a Fedora repository',
+    name='plastron',
+    entry_points_group='plastron_commands',
+)
 @click.help_option('--help', '-h')
 @click.version_option(version, '--version', '-V')
 @click.option('-c', '--config', 'config_file', type=click.File(mode='r'), help='Path to configuration file.')

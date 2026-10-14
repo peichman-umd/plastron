@@ -1,8 +1,6 @@
-import httpretty
 import pytest
 import responses
 from click.testing import CliRunner
-from pytest_datadir.plugin import shared_datadir
 from rdflib import Graph, Literal
 
 from plastron.cli import plastron_command

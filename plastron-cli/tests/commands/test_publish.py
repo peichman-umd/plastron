@@ -1,5 +1,4 @@
 import dataclasses
-from argparse import Namespace
 from random import randint
 from unittest.mock import MagicMock
 
