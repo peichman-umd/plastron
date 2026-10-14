@@ -23,7 +23,8 @@ def test_cannot_resume_without_job_directory(cli_runner, datadir):
     # Verifies that the import command throws RuntimeError when resuming a
     # job and the directory associated with job id is not found
     result = cli_runner.invoke(
-        plastron_command, ['-c', datadir / 'nonexistent-jobs-dir/plastron.yml', 'import', '--resume', '--job-id', str(uuid4())]
+        plastron_command,
+        ['-c', datadir / 'nonexistent-jobs-dir/plastron.yml', 'import', '--resume', '--job-id', str(uuid4())],
     )
     assert result.exit_code != 0
     assert isinstance(result.exception, JobNotFoundError)
@@ -60,7 +61,8 @@ def test_model_is_required_unless_resuming(cli_runner, datadir, config_file_name
     # Verifies that the import command throws RuntimeError if model
     # is not provided when not resuming
     result = cli_runner.invoke(
-        plastron_command, ['-c', config_file_name, 'import', '--container', 'test_container', str(datadir / 'import.csv')]
+        plastron_command,
+        ['-c', config_file_name, 'import', '--container', 'test_container', str(datadir / 'import.csv')],
     )
     assert result.exit_code != 0
     assert isinstance(result.exception, RuntimeError)
@@ -70,7 +72,9 @@ def test_model_is_required_unless_resuming(cli_runner, datadir, config_file_name
 def test_import_file_is_required_unless_resuming(cli_runner, config_file_name):
     # Verifies that the import command throws RuntimeError if an import_file
     # is not provided when not resuming
-    result = cli_runner.invoke(plastron_command, ['-c', config_file_name, 'import', '--container', 'test_container', '--model', 'Item'])
+    result = cli_runner.invoke(
+        plastron_command, ['-c', config_file_name, 'import', '--container', 'test_container', '--model', 'Item']
+    )
     assert result.exit_code != 0
     assert isinstance(result.exception, RuntimeError)
     assert 'An import file is required unless resuming an existing job' in str(result.exception)
@@ -79,7 +83,9 @@ def test_import_file_is_required_unless_resuming(cli_runner, config_file_name):
 def test_container_is_required_unless_resuming(cli_runner, datadir, config_file_name):
     # Verifies that the import command throws RuntimeError if an import_file
     # is not provided when not resuming
-    result = cli_runner.invoke(plastron_command, ['-c', config_file_name, 'import', '--model', 'Item', str(datadir / 'import.csv')])
+    result = cli_runner.invoke(
+        plastron_command, ['-c', config_file_name, 'import', '--model', 'Item', str(datadir / 'import.csv')]
+    )
     assert result.exit_code != 0
     assert isinstance(result.exception, RuntimeError)
     assert 'A container is required unless resuming an existing job' in str(result.exception)
@@ -205,7 +211,8 @@ def test_make_template(cli_runner, config_file_name, plastron_context, model_nam
     template_file = tempfile.NamedTemporaryFile(delete=False)
 
     result = cli_runner.invoke(
-        plastron_command, ['-c', config_file_name, 'import', '--make-template', template_file.name, '--model', model_name]
+        plastron_command,
+        ['-c', config_file_name, 'import', '--make-template', template_file.name, '--model', model_name],
     )
     assert result.exit_code == 0
 

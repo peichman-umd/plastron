@@ -74,9 +74,7 @@ def write_csv_header(
     help='Renames the binary column in the CSV output to the provided name.',
 )
 @click.option('--member-of', help='URI of the object that new items are PCDM members of')
-@click.option(
-    '--access', help='URI or CURIE of the access class to apply to new items', type=uri_or_curie
-)
+@click.option('--access', help='URI or CURIE of the access class to apply to new items', type=uri_or_curie)
 @click.option(
     '--container',
     'container_path',

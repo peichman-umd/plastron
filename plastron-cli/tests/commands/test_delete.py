@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import httpretty
 import pytest
 import responses
 from click.testing import Result
@@ -74,7 +73,9 @@ def is_not_success(result: Result) -> bool:
     ],
 )
 @responses.activate
-def test_delete_command(cli_runner, config_file_name, repo, register_root, path, responses, expected, register_resource):
+def test_delete_command(
+    cli_runner, config_file_name, repo, register_root, path, responses, expected, register_resource
+):
     register_root()
     register_resource(
         url=str(repo[path].url),
@@ -98,7 +99,9 @@ def test_completed_log(cli_runner, config_file_name, datadir, repo, register_roo
         },
     )
     completed_log_path: Path = datadir / 'completed.csv'
-    result = cli_runner.invoke(plastron_command, ['-c', config_file_name, 'delete', '/test', '--completed', str(completed_log_path)])
+    result = cli_runner.invoke(
+        plastron_command, ['-c', config_file_name, 'delete', '/test', '--completed', str(completed_log_path)]
+    )
     assert result.exit_code == 0
     assert completed_log_path.exists()
     completed_log = ItemLog(filename=completed_log_path, fieldnames=['uri', 'title', 'timestamp'], keyfield='uri')

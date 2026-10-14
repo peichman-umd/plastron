@@ -127,6 +127,7 @@ def register_resource():
     def _register_resource(url: str | re.Pattern, response_args: dict[str, dict]):
         for method, kwargs in response_args.items():
             responses.add(method=method, url=url, **kwargs)
+
     return _register_resource
 
 
@@ -227,6 +228,7 @@ def register_binary(repo, register_resource):
             },
         )
         return url, description_url
+
     return _register_binary
 
 
