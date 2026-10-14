@@ -1,9 +1,9 @@
 import logging
-from argparse import Namespace
 
+import click
 from PIL import Image
 
-from plastron.cli.commands import BaseCommand
+from plastron.cli import argument
 from plastron.files import BinaryResource
 from plastron.models.pcdm import PCDMImageFile
 from plastron.repo.utils import context
@@ -13,30 +13,24 @@ Image.MAX_IMAGE_PIXELS = None
 logger = logging.getLogger(__name__)
 
 
-def configure_cli(subparsers):
-    parser = subparsers.add_parser(name='imgsize', description='Add width and height to image resources')
-    parser.add_argument('uris', nargs='*', help='URIs of repository objects to get image info')
-    parser.set_defaults(cmd_name='imgsize')
+@click.command(help='Add width and height to image resources')
+@argument.uris(help='URIs of repository objects to get image info')
+def imgsize_command(ctx: click.Context, uris: list[str]):
+    for uri in uris:
+        file_resource: BinaryResource = ctx.obj.repo.read(uri, BinaryResource)
+        file = file_resource.describe(PCDMImageFile)
 
+        if file.mime_type.value.startswith('image/'):
+            with context(repo=ctx.obj.repo):
+                logger.info(f'Reading image data from {uri}')
 
-class Command(BaseCommand):
-    def __call__(self, args: Namespace):
-        for uri in args.uris:
-            file_resource: BinaryResource = self.context.repo[uri:BinaryResource].read()
-            file = file_resource.describe(PCDMImageFile)
+                with file_resource.open() as file_contents:
+                    image = Image.open(file_contents)
 
-            # source = RepositoryFileSource(client, uri)
-            if file.mime_type.value.startswith('image/'):  # ?
-                with context(repo=self.context.repo):
-                    logger.info(f'Reading image data from {uri}')
+                logger.info(f'URI: {uri}, Width: {image.width}, Height: {image.height}')
+                file.width = image.width
+                file.height = image.height
+                file_resource.update()
 
-                    with file_resource.open() as file_contents:
-                        image = Image.open(file_contents)
-
-                    logger.info(f'URI: {uri}, Width: {image.width}, Height: {image.height}')
-                    file.width = image.width
-                    file.height = image.height
-                    file_resource.update()
-
-            else:
-                logger.warning(f'{uri} is not of type image/*; skipping')
+        else:
+            logger.warning(f'{uri} is not of type image/*; skipping')

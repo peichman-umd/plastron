@@ -1,3 +1,6 @@
+"""**Note:** There is currently no way to run this module. The source code is being preserved
+for the purposes of porting some of the `load` command's functionality to the `import` command."""
+
 import logging.config
 import os
 import re
@@ -5,13 +8,14 @@ from argparse import ArgumentTypeError, Namespace
 from datetime import datetime, timezone
 from importlib import import_module
 from time import sleep
+from typing import Any, Generator
 
 import yaml
 
 from plastron.cli import ConfigError
-from plastron.cli.commands import BaseCommand
 from plastron.client import Client, ClientError
 from plastron.client.transactions import transaction
+from plastron.context import PlastronContext
 from plastron.jobs import ItemLog
 from plastron.repo import DataReadError
 
@@ -61,6 +65,31 @@ def configure_cli(subparsers):
     parser.add_argument('--ignore', '-i', help='file listing items to ignore', action='store')
     parser.add_argument('--wait', '-w', help='wait n seconds between items', action='store')
     parser.set_defaults(cmd_name='load')
+
+
+class BaseCommand:
+    def __init__(self, context: PlastronContext):
+        self.context = context
+        self.result = None
+
+    @property
+    def config(self) -> dict[str, Any]:
+        name = self.__module__.split('.')[-1]
+        if name == 'importcommand':
+            name = 'import'
+        return self.context.config.get('COMMANDS', {}).get(name.upper(), {})
+
+    def _run(self, command: Generator[dict[str, Any], None, dict[str, Any]]):
+        # delegating generator; each progress step is passed to the calling
+        # method, and the return value from the command is stored as the result
+        self.result = yield from command
+
+    def run(self, command: Generator[Any, None, dict[str, Any]]) -> dict[str, Any]:
+        # Run the delegating generator to exhaustion, discarding the intermediate
+        # yielded values. Return the final result.
+        for _ in self._run(command):
+            pass
+        return self.result
 
 
 class Command(BaseCommand):
