@@ -1,5 +1,8 @@
 """Common CLI argument definitions."""
 
+# disable formatting so ruff won't try to put the `| kwargs` onto a separate line
+# fmt: off
+
 import click
 
 

@@ -22,7 +22,7 @@ from plastron.namespaces import dcterms, rdf, pcdm
         ([['foo\n', 'bar\n']], ['foo', 'bar']),
         ([[' foo\n', ' bar\n']], ['foo', 'bar']),
         ([[' foo\n', '\n', ' bar\n']], ['foo', 'bar']),
-    ]
+    ],
 )
 def test_clean_lines(iterables, expected_list):
     assert list(clean_lines(*iterables)) == expected_list
@@ -100,7 +100,7 @@ def test_command_exception(cli_runner):
             complete_var: str | None = None,
             standalone_mode: bool = True,
             windows_expand_args: bool = True,
-            ** extra: Any,
+            **extra: Any,
         ):
             raise RuntimeError(nonce)
 

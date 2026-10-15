@@ -540,9 +540,7 @@ class ImportRow:
             # construct the SPARQL Update query if there are any deletions or insertions
             # then do a PATCH update of an existing item
             try:
-                resource: PublishableObjectResource = self.context.repo[
-                    self.item.uri: PublishableObjectResource
-                ].read()
+                resource = self.context.repo.read(self.item.uri, PublishableObjectResource)
                 resource.attach_description(self.item)
                 resource.update()
                 # publish this resource, if requested
@@ -584,7 +582,7 @@ class ImportRow:
 
         logger.debug(f'Creating resources in container: {self.job.config.container}')
         logger.debug(f'Repo: {self.context.repo}')
-        container: ContainerResource = self.context.repo[self.job.config.container:ContainerResource]
+        container = self.context.repo.read(self.job.config.container, ContainerResource)
 
         try:
             with self.context.repo.transaction():
