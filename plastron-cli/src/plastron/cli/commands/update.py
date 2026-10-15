@@ -1,6 +1,7 @@
+import io
 import logging
-from collections.abc import Generator
-from typing import Any
+from collections.abc import Generator, Iterable
+from typing import Any, TextIO
 
 import click
 
@@ -43,14 +44,14 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def update_command(
     ctx: click.Context,
-    update_file,
+    update_file: TextIO,
     recursive: str | None,
     dry_run: bool,
     use_transactions: bool,
     validate: bool,
     model: str | None,
     completed: str,
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     if validate and model is None:

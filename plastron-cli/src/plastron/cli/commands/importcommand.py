@@ -148,7 +148,7 @@ def import_command(
     limit: int | None,
     percentage: int | None,
     validate_only: bool,
-    template_file,
+    template_file: TextIO | None,
     convert_from: str | None,
     convert_params: list[tuple[str, str]],
     access: str | None,
@@ -161,7 +161,7 @@ def import_command(
     file_grouping_strategy: str,
     use_archival_groups: bool,
     publish: bool,
-    import_file,
+    import_file: TextIO | None,
 ):
     """Performs the import."""
 

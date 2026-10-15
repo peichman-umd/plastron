@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 
 import click
 
@@ -31,7 +32,7 @@ def publish_command(
     ctx: click.Context,
     force_hidden: bool,
     force_visible: bool,
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     for uri in clean_lines(uris_file or [], uris):
