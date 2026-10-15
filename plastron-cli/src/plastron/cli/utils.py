@@ -45,7 +45,7 @@ class EntryPointsGroup(click.Group):
 
     def get_command(self, ctx, cmd_name):
         try:
-            entrypoint = importlib.metadata.entry_points(group=self.entry_points_group, name=cmd_name)[0]
+            entrypoint = importlib.metadata.entry_points(group=self.entry_points_group)[cmd_name]
             return entrypoint.load()
-        except IndexError:
+        except KeyError:
             return super().get_command(ctx, cmd_name)
