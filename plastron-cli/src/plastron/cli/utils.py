@@ -1,8 +1,7 @@
 import importlib.metadata
 import logging
-import sys
-from argparse import Namespace
-from typing import Iterable
+from collections.abc import Iterable
+from itertools import chain
 
 import click
 from rdflib import URIRef, Literal
@@ -11,6 +10,11 @@ from rdflib.util import from_n3
 from plastron.utils import uri_or_curie
 
 logger = logging.getLogger(__name__)
+
+
+def clean_lines(*iters: Iterable[str]) -> Iterable[str]:
+    """Strips surrounding whitespace and skips empty lines in the given iterables."""
+    return filter(lambda s: s != '', map(str.strip, chain(*iters)))
 
 
 def parse_data_property(p: str, o: str) -> tuple[URIRef, Literal]:
@@ -45,14 +49,3 @@ class EntryPointsGroup(click.Group):
             return entrypoint.load()
         except IndexError:
             return super().get_command(ctx, cmd_name)
-
-
-def get_uris(args: Namespace) -> Iterable[str]:
-    if hasattr(args, 'uris_file') or hasattr(args, 'uris'):
-        if hasattr(args, 'uris_file') and args.uris_file is not None:
-            yield from (line.rstrip() for line in args.uris_file)
-        if hasattr(args, 'uris') and args.uris is not None:
-            yield from args.uris
-    else:
-        # fall back to STDIN
-        yield from (line.rstrip() for line in sys.stdin)

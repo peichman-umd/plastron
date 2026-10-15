@@ -1,11 +1,11 @@
 import logging
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from itertools import chain
 
 import click
 
 from plastron.cli import argument, option
+from plastron.cli.utils import clean_lines
 from plastron.client import ClientError
 from plastron.jobs import ItemLog
 from plastron.models.pcdm import PCDMObject
@@ -54,7 +54,7 @@ def delete_command(
         # if recursive was not specified, traverse nothing
         traverse = []
 
-    for uri in chain(uris_file or [], uris):
+    for uri in clean_lines(uris_file or [], uris):
         with context(repo=ctx.obj.repo, use_transactions=use_transactions, dry_run=dry_run):
             try:
                 for resource in ctx.obj.repo[uri].walk(traverse=traverse):

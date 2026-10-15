@@ -3,11 +3,11 @@ import json
 import logging
 import sys
 from collections.abc import Callable
-from itertools import chain
 
 import click
 
 from plastron.cli import argument, option
+from plastron.cli.utils import clean_lines
 from plastron.files import BinaryResource, FixityCheckingError
 from plastron.models.fedora import FedoraBinary
 
@@ -34,7 +34,7 @@ def fixitycheck_command(
     uris: list[str],
 ):
     write = get_writer(output_format)
-    for uri in chain(uris_file or [], uris):
+    for uri in clean_lines(uris_file or [], uris):
         binary_resource = ctx.obj.repo.read(uri, BinaryResource)
 
         try:

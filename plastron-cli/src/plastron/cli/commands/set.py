@@ -1,12 +1,12 @@
 import logging
 from collections import defaultdict
 from collections.abc import Iterable
-from itertools import chain
 
 import click
 from rdflib import Literal
 
 from plastron.cli import argument, option
+from plastron.cli.utils import clean_lines
 from plastron.models import get_model_from_name
 from plastron.rdfmapping.descriptors import DataProperty, ObjectProperty
 from plastron.rdfmapping.resources import RDFResourceBase
@@ -46,7 +46,7 @@ def set_command(
 ):
     model_class = get_model_from_name(model_name)
     values = get_new_values(model_class, fields_to_set)
-    for uri in chain(uris_file or [], uris):
+    for uri in clean_lines(uris_file or [], uris):
         resource: RepositoryResource = ctx.obj.repo[uri].read()
         obj = resource.describe(model_class)
         for field, new_values in values.items():

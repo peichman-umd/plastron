@@ -1,11 +1,11 @@
 import logging
 from collections.abc import Generator
-from itertools import chain
 from typing import Any
 
 import click
 
 from plastron.cli import option, argument
+from plastron.cli.utils import clean_lines
 from plastron.jobs import ItemLog
 from plastron.jobs.updatejob import UpdateJob
 from plastron.models import get_model_from_name
@@ -75,7 +75,7 @@ def update_command(
 
     update_job = UpdateJob(
         repo=ctx.obj.repo,
-        uris=list(chain(uris_file or [], uris)),
+        uris=list(clean_lines(uris_file or [], uris)),
         sparql_update=sparql_update,
         model_class=model_class,
         traverse=traverse,

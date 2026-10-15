@@ -1,11 +1,11 @@
 import logging
 from collections.abc import Generator
-from itertools import chain
 from typing import Any
 
 import click
 
 from plastron.cli import argument, option
+from plastron.cli.utils import clean_lines
 from plastron.jobs.exportjob import ExportJob
 from plastron.serializers import SERIALIZER_CLASSES
 
@@ -58,7 +58,7 @@ def export_command(
         context=ctx.obj,
         export_binaries=export_binaries,
         binary_types=binary_types,
-        uris=list(chain(uris_file or [], uris)),
+        uris=list(clean_lines(uris_file or [], uris)),
         export_format=export_format,
         output_dest=output_dest,
         uri_template=uri_template,
