@@ -120,3 +120,19 @@ def dry_run(**kwargs):
             help='Simulate the operation without modifying the repository.',
         ) | kwargs,
     )
+
+
+def use_transactions(**kwargs):
+    """
+    Switches: `--txn/--no-txn`, `--transactions/--no-transactions`
+    * Argument name: `use_transactions`
+    * Argument type: `bool`
+    """
+    return click.option(
+        '--transactions/--no-transactions',
+        '--txn/--no-txn',
+        'use_transactions',
+        **dict(
+            help='Run with or without using transactions.',
+        ) | kwargs,
+    )
