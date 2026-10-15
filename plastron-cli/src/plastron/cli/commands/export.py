@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from typing import Any
 
 import click
@@ -51,7 +51,7 @@ def export_command(
     uri_template: str | None,
     export_binaries: bool,
     binary_types: str | None,
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     export_job = ExportJob(

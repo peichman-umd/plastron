@@ -41,7 +41,7 @@ def set_command(
     ctx: click.Context,
     model_name: str,
     fields_to_set: list[tuple[str, str]],
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     model_class = get_model_from_name(model_name)

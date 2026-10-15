@@ -1,13 +1,19 @@
 import os
 import tempfile
 from csv import DictReader
+from io import StringIO
+from tempfile import TemporaryFile
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 import yaml
 
 from plastron.cli import plastron_command
+from plastron.cli.commands.importcommand import write_model_template
 from plastron.jobs import JobConfigError, JobNotFoundError
+from plastron.models import ContentModeledResource
+from plastron.rdfmapping.resources import RDFResourceBase
 
 
 def test_cannot_resume_without_job_id(cli_runner, config_file_name):
@@ -224,3 +230,30 @@ def test_make_template(cli_runner, config_file_name, plastron_context, model_nam
         os.unlink(template_file.name)
 
         assert header_fields == expected_header_fields
+
+
+def test_model_required_when_writing_template(cli_runner, config_file_name):
+    template_file = tempfile.NamedTemporaryFile(delete=False)
+    result = cli_runner.invoke(
+        plastron_command,
+        ['-c', config_file_name, 'import', '--make-template', template_file.name],
+    )
+    assert result.exit_code != 0
+    assert isinstance(result.exception, RuntimeError)
+    assert 'A model is required for writing the template file' in str(result.exception)
+
+
+def test_write_model_template_unknown_model():
+    with pytest.raises(RuntimeError) as excinfo:
+        write_model_template('NONEXISTENT_MODEL', StringIO())
+
+    assert 'Cannot find model class' in str(excinfo.value)
+
+
+@patch('plastron.cli.commands.importcommand.get_model_from_name')
+def test_model_has_no_header_fields(get_model_from_name):
+    get_model_from_name.return_value = type('Foo', (RDFResourceBase,), {})
+    with pytest.raises(RuntimeError) as excinfo:
+        write_model_template('HEADERLESS_MODEL', StringIO())
+
+    assert 'has no HEADER_MAP' in str(excinfo.value)

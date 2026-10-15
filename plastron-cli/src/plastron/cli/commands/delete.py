@@ -35,8 +35,8 @@ def delete_command(
     recursive: str | None,
     dry_run: bool,
     use_transactions: bool,
-    completed,
-    uris_file: Iterable[str],
+    completed: str,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     ctx.obj.client.test_connection()

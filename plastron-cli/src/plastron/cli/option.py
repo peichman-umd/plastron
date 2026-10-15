@@ -60,6 +60,7 @@ def uris_file(**kwargs):
     """
     * Switches: `-f`,`--uris-file`
     * Argument name: `uris_file`
+    * Argument type: `collections.abc.Iterable[str]`
     """
     return click.option(
         '-f',

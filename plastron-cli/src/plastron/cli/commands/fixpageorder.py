@@ -1,5 +1,6 @@
 import logging
 import re
+from collections.abc import Iterable
 
 import click
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 def fixpageorder_command(
     ctx: click.Context,
     dry_run: bool,
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     page_pattern = re.compile(r'page (\d+)', re.IGNORECASE)

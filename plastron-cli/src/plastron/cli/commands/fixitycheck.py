@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 import click
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 def fixitycheck_command(
     ctx: click.Context,
     output_format: str,
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     write = get_writer(output_format)

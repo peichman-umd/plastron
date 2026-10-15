@@ -1,6 +1,7 @@
 import csv
 import logging
 from collections.abc import Iterable
+from typing import TextIO
 
 import click
 from rdflib import URIRef
@@ -105,8 +106,8 @@ def stub_command(
     member_of: str,
     access: str,
     container_path: str,
-    output_file,
-    source_file,
+    output_file: TextIO,
+    source_file: Iterable[str],
 ):
     csv_file = csv.DictReader(source_file)
     if csv_file.fieldnames is None:

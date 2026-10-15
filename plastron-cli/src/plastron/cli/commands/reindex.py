@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 from os import getpid, uname
 
 import click
@@ -31,7 +32,7 @@ def reindex_command(
     ctx: click.Context,
     recursive: str | None,
     index: str,
-    uris_file,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     routing_headers = get_routing_headers(ctx.obj, index)
