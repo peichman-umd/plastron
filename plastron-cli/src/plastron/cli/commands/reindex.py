@@ -1,10 +1,10 @@
 import logging
-from itertools import chain
 from os import getpid, uname
 
 import click
 
 from plastron.cli import argument, option, version
+from plastron.cli.utils import clean_lines
 from plastron.context import PlastronContext
 from plastron.messaging.messages import Message
 from plastron.rdfmapping.resources import RDFResource
@@ -42,7 +42,7 @@ def reindex_command(
         username = ctx.obj.delegated_user or 'plastron'
         traverse = parse_predicate_list(recursive) if recursive is not None else []
 
-        for uri in chain(uris_file or [], uris):
+        for uri in clean_lines(uris_file or [], uris):
             for resource in ctx.obj.repo[uri].walk(traverse=traverse, include_tombstones=True):
                 logger.info(f'Reindexing {resource.url}')
                 if isinstance(resource, Tombstone):

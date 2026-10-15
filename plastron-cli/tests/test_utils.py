@@ -1,8 +1,23 @@
 import pytest
 from rdflib import Literal, URIRef
 
-from plastron.cli.utils import parse_object_property, parse_data_property
+from plastron.cli.utils import parse_object_property, parse_data_property, clean_lines
 from plastron.namespaces import dcterms, rdf, pcdm
+
+
+@pytest.mark.parametrize(
+    ('iterables', 'expected_list'),
+    [
+        ([], []),
+        ([['foo', 'bar']], ['foo', 'bar']),
+        ([['foo'], ['bar']], ['foo', 'bar']),
+        ([['foo\n', 'bar\n']], ['foo', 'bar']),
+        ([[' foo\n', ' bar\n']], ['foo', 'bar']),
+        ([[' foo\n', '\n', ' bar\n']], ['foo', 'bar']),
+    ]
+)
+def test_clean_lines(iterables, expected_list):
+    assert list(clean_lines(*iterables)) == expected_list
 
 
 @pytest.mark.parametrize(

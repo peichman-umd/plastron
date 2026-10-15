@@ -1,9 +1,9 @@
 import logging
-from itertools import chain
 
 import click
 
 from plastron.cli import option, argument
+from plastron.cli.utils import clean_lines
 from plastron.repo import RepositoryError
 from plastron.repo.publish import PublishableResource
 
@@ -34,7 +34,7 @@ def unpublish_command(
     uris_file,
     uris: list[str],
 ):
-    for uri in chain(uris_file or [], uris):
+    for uri in clean_lines(uris_file or [], uris):
         # get the resource and check for an existing handle and current publication status
         try:
             resource: PublishableResource = ctx.obj.repo[uri:PublishableResource].read()

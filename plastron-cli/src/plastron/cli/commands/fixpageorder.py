@@ -1,10 +1,10 @@
 import logging
 import re
-from itertools import chain
 
 import click
 
 from plastron.cli import argument, option
+from plastron.cli.utils import clean_lines
 from plastron.models.ore import Proxy
 from plastron.repo import RepositoryResource
 from plastron.repo.pcdm import PCDMObjectResource
@@ -25,7 +25,7 @@ def fixpageorder_command(
     uris: list[str],
 ):
     page_pattern = re.compile(r'page (\d+)', re.IGNORECASE)
-    for uri in chain(uris_file or [], uris):
+    for uri in clean_lines(uris_file or [], uris):
         logger.info(f'Retrieving {uri}...')
         resource = ctx.obj.repo.get_resource(uri, PCDMObjectResource)
         proxy_by_page: dict[int, Proxy] = {}
