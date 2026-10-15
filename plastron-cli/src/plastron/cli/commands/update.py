@@ -25,12 +25,7 @@ logger = logging.getLogger(__name__)
 )
 @option.recursive()
 @option.dry_run()
-@click.option(
-    '--transactions/--no-transactions',
-    '--txn/--no-txn',
-    'use_transactions',
-    help='Run with or without using transactions.',
-)
+@option.use_transactions()
 @click.option('--validate', is_flag=True, help='Validate before updating.')
 @click.option(
     '-m',

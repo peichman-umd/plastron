@@ -19,12 +19,7 @@ logger = logging.getLogger(__name__)
 @click.command(help='Delete objects from the repository')
 @option.recursive()
 @option.dry_run()
-@click.option(
-    '--transactions/--no-transactions',
-    '--txn/--no-txn',
-    'use_transactions',
-    help='Run with or without using transactions.',
-)
+@option.use_transactions()
 @click.option('--completed', help='File recording the URIs of deleted resources.', type=click.Path())
 @option.uris_file(help='File containing a list of URIs of resources to delete.')
 @argument.uris(help='Repository URIs to be deleted.')
