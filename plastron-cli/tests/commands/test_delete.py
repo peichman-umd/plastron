@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import responses
 from click.testing import Result
-from httpretty import DELETE, GET, HEAD
+from responses import GET, HEAD, DELETE
 
 from plastron.cli import plastron_command
 from plastron.jobs import ItemLog
@@ -18,7 +18,7 @@ def is_not_success(result: Result) -> bool:
 
 
 @pytest.mark.parametrize(
-    ('path', 'responses', 'expected'),
+    ('path', 'response_args', 'expected'),
     [
         # resource exists, delete successful
         (
@@ -74,12 +74,12 @@ def is_not_success(result: Result) -> bool:
 )
 @responses.activate
 def test_delete_command(
-    cli_runner, config_file_name, repo, register_root, path, responses, expected, register_resource
+    cli_runner, config_file_name, repo, register_root, path, response_args, expected, register_resource
 ):
     register_root()
     register_resource(
         url=str(repo[path].url),
-        response_args=responses,
+        response_args=response_args,
     )
     result = cli_runner.invoke(plastron_command, ['-c', config_file_name, 'delete', path])
     assert expected(result)
