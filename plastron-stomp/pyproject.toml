@@ -26,8 +26,8 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
     'CoilMQ',
     "pytest",
     "pytest-cov",

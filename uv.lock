@@ -1034,18 +1034,6 @@ cli = [
 stomp = [
     { name = "plastron-stomp" },
 ]
-test = [
-    { name = "plastron-cli", extra = ["test"] },
-    { name = "plastron-client", extra = ["test"] },
-    { name = "plastron-jobs", extra = ["test"] },
-    { name = "plastron-messaging", extra = ["test"] },
-    { name = "plastron-models", extra = ["test"] },
-    { name = "plastron-rdf", extra = ["test"] },
-    { name = "plastron-repo", extra = ["test"] },
-    { name = "plastron-stomp", extra = ["test"] },
-    { name = "plastron-utils", extra = ["test"] },
-    { name = "plastron-web", extra = ["test"] },
-]
 web = [
     { name = "plastron-web" },
 ]
@@ -1053,33 +1041,24 @@ web = [
 [package.metadata]
 requires-dist = [
     { name = "plastron-cli", marker = "extra == 'cli'", editable = "plastron-cli" },
-    { name = "plastron-cli", extras = ["test"], marker = "extra == 'test'", editable = "plastron-cli" },
     { name = "plastron-client", editable = "plastron-client" },
-    { name = "plastron-client", extras = ["test"], marker = "extra == 'test'", editable = "plastron-client" },
     { name = "plastron-jobs", editable = "plastron-jobs" },
-    { name = "plastron-jobs", extras = ["test"], marker = "extra == 'test'", editable = "plastron-jobs" },
     { name = "plastron-messaging", editable = "plastron-messaging" },
-    { name = "plastron-messaging", extras = ["test"], marker = "extra == 'test'", editable = "plastron-messaging" },
     { name = "plastron-models", editable = "plastron-models" },
-    { name = "plastron-models", extras = ["test"], marker = "extra == 'test'", editable = "plastron-models" },
     { name = "plastron-rdf", editable = "plastron-rdf" },
-    { name = "plastron-rdf", extras = ["test"], marker = "extra == 'test'", editable = "plastron-rdf" },
     { name = "plastron-repo", editable = "plastron-repo" },
-    { name = "plastron-repo", extras = ["test"], marker = "extra == 'test'", editable = "plastron-repo" },
     { name = "plastron-stomp", marker = "extra == 'stomp'", editable = "plastron-stomp" },
-    { name = "plastron-stomp", extras = ["test"], marker = "extra == 'test'", editable = "plastron-stomp" },
     { name = "plastron-utils", editable = "plastron-utils" },
-    { name = "plastron-utils", extras = ["test"], marker = "extra == 'test'", editable = "plastron-utils" },
     { name = "plastron-web", marker = "extra == 'web'", editable = "plastron-web" },
-    { name = "plastron-web", extras = ["test"], marker = "extra == 'test'", editable = "plastron-web" },
 ]
-provides-extras = ["cli", "stomp", "web", "test"]
+provides-extras = ["cli", "stomp", "web"]
 
 [[package]]
 name = "plastron-cli"
 source = { editable = "plastron-cli" }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "certifi" },
     { name = "lxml" },
     { name = "pillow" },
     { name = "plastron-jobs" },
@@ -1092,8 +1071,8 @@ dependencies = [
     { name = "rdflib" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -1102,7 +1081,8 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4" },
-    { name = "lxml", specifier = "<6.0" },
+    { name = "certifi", specifier = ">=2026.10.19" },
+    { name = "lxml" },
     { name = "pillow" },
     { name = "plastron-jobs", editable = "plastron-jobs" },
     { name = "plastron-models", editable = "plastron-models" },
@@ -1110,13 +1090,16 @@ requires-dist = [
     { name = "plastron-utils", editable = "plastron-utils" },
     { name = "pyparsing" },
     { name = "pysolr" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "pyyaml" },
     { name = "rdflib" },
-    { name = "ruff", marker = "extra == 'test'" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "plastron-client"
@@ -1128,8 +1111,8 @@ dependencies = [
     { name = "urlobject" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "freezegun" },
     { name = "http-server-mock" },
     { name = "pytest" },
@@ -1139,17 +1122,20 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "freezegun", marker = "extra == 'test'" },
-    { name = "http-server-mock", marker = "extra == 'test'" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "rdflib" },
     { name = "requests" },
     { name = "requests-jwtauth" },
-    { name = "ruff", marker = "extra == 'test'" },
     { name = "urlobject" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "freezegun" },
+    { name = "http-server-mock" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "plastron-jobs"
@@ -1170,8 +1156,8 @@ dependencies = [
     { name = "urlobject" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-datadir" },
@@ -1189,16 +1175,19 @@ requires-dist = [
     { name = "plastron-repo", editable = "plastron-repo" },
     { name = "plastron-utils", editable = "plastron-utils" },
     { name = "pyparsing" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "pytest-datadir", marker = "extra == 'test'" },
     { name = "pyyaml" },
     { name = "rdflib" },
     { name = "requests" },
-    { name = "ruff", marker = "extra == 'test'" },
     { name = "urlobject" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-datadir" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "plastron-messaging"
@@ -1207,21 +1196,22 @@ dependencies = [
     { name = "stomp-py" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "ruff", marker = "extra == 'test'" },
-    { name = "stomp-py" },
+requires-dist = [{ name = "stomp-py" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
 ]
-provides-extras = ["test"]
 
 [[package]]
 name = "plastron-models"
@@ -1241,8 +1231,8 @@ dependencies = [
     { name = "types-lxml" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "freezegun" },
     { name = "httpretty" },
     { name = "pytest" },
@@ -1253,24 +1243,27 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "edtf-validate" },
-    { name = "freezegun", marker = "extra == 'test'" },
-    { name = "httpretty", marker = "extra == 'test'" },
     { name = "importlib-metadata" },
-    { name = "lxml", specifier = "<6.0" },
+    { name = "lxml" },
     { name = "paramiko" },
     { name = "pillow" },
     { name = "plastron-client", editable = "plastron-client" },
     { name = "plastron-rdf", editable = "plastron-rdf" },
     { name = "plastron-utils", editable = "plastron-utils" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "python-iso639" },
     { name = "rdflib", specifier = ">=6.0.0" },
     { name = "requests" },
-    { name = "ruff", marker = "extra == 'test'" },
     { name = "types-lxml" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "freezegun" },
+    { name = "httpretty" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "plastron-rdf"
@@ -1279,8 +1272,8 @@ dependencies = [
     { name = "rdflib" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "freezegun" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1288,14 +1281,15 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "freezegun", marker = "extra == 'test'" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "rdflib", specifier = "<7.3.0" },
-    { name = "ruff", marker = "extra == 'test'" },
+requires-dist = [{ name = "rdflib", specifier = "<7.3.0" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "freezegun" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
 ]
-provides-extras = ["test"]
 
 [[package]]
 name = "plastron-repo"
@@ -1314,8 +1308,8 @@ dependencies = [
     { name = "urlobject" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "freezegun" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1333,16 +1327,20 @@ requires-dist = [
     { name = "plastron-models", editable = "plastron-models" },
     { name = "plastron-utils", editable = "plastron-utils" },
     { name = "pysolr" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "pytest-datadir", marker = "extra == 'test'" },
     { name = "pyyaml" },
     { name = "rdflib" },
     { name = "requests" },
-    { name = "ruff", marker = "extra == 'test'" },
     { name = "urlobject" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "freezegun" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-datadir" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "plastron-stomp"
@@ -1360,8 +1358,8 @@ dependencies = [
     { name = "watchdog" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "coilmq" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1372,20 +1370,23 @@ test = [
 requires-dist = [
     { name = "beautifulsoup4" },
     { name = "click" },
-    { name = "coilmq", marker = "extra == 'test'" },
     { name = "plastron-jobs", editable = "plastron-jobs" },
     { name = "plastron-models", editable = "plastron-models" },
     { name = "plastron-repo", editable = "plastron-repo" },
     { name = "plastron-utils", editable = "plastron-utils" },
     { name = "pyparsing" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "pyyaml" },
-    { name = "ruff", marker = "extra == 'test'" },
     { name = "stomp-py" },
     { name = "watchdog" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coilmq" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "plastron-utils"
@@ -1423,8 +1424,8 @@ dependencies = [
     { name = "waitress" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -1437,13 +1438,16 @@ requires-dist = [
     { name = "plastron-jobs", editable = "plastron-jobs" },
     { name = "plastron-repo", editable = "plastron-repo" },
     { name = "plastron-utils", editable = "plastron-utils" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "python-dotenv" },
-    { name = "ruff", marker = "extra == 'test'" },
     { name = "waitress" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "pluggy"

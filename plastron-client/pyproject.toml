@@ -20,8 +20,8 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
     "freezegun",
     "http-server-mock",
     "pytest",

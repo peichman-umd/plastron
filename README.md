@@ -95,34 +95,7 @@ Clone the repository, and run `uv sync`:
 ```zsh
 git clone git@github.com:umd-lib/plastron.git
 cd plastron
-uv sync --all-extras
-```
-
-### Using `pyenv` and `pip`
-
-This repository includes a [.python-version](.python-version) file. If you are
-using a tool like [pyenv] to manage your Python versions, it will select
-an installed Python for you.
-
-To install Plastron in [development mode], do the following:
-
-```zsh
-git clone git@github.com:umd-lib/plastron.git
-cd plastron
-python -m venv --prompt "plastron-py$(cat .python-version)" .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install --use-pep517 \
-    -e './plastron-utils[test]' \
-    -e './plastron-client[test]' \
-    -e './plastron-rdf[test]' \
-    -e './plastron-messaging[test]' \
-    -e './plastron-models[test]' \
-    -e './plastron-repo[test]' \
-    -e './plastron-jobs[test]' \
-    -e './plastron-web[test]' \
-    -e './plastron-stomp[test]' \
-    -e './plastron-cli[test]'
+uv sync
 ```
 
 This allows for in-place editing of Plastron's source code in the git
