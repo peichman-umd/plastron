@@ -54,7 +54,7 @@ def reindex_command(
 
 def get_routing_headers(plastron_context: PlastronContext, index_key: str) -> dict[str, str]:
     try:
-        all_routing_headers = plastron_context.config['ROUTING_HEADERS']
+        all_routing_headers = plastron_context.config['COMMANDS']['REINDEX']['ROUTING_HEADERS']
     except KeyError as e:
         raise RuntimeError(f'No {e} configuration found') from e
 

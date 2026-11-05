@@ -51,23 +51,34 @@ def test_create_message_for_tombstone(plastron_context, broker):
         assert message.headers[k] == v
 
 
+@pytest.fixture
+def reindex_command_config():
+    return {
+        'REINDEX': {
+            'ROUTING_HEADERS': {
+                'solr': {'FcrepoIndexingDestinations': 'activemq:index.solr'},
+            }
+        }
+    }
+
+
 def test_get_routing_headers_no_config(plastron_context):
     with pytest.raises(RuntimeError) as excinfo:
         get_routing_headers(plastron_context, 'foo')
 
-    assert "No 'ROUTING_HEADERS' configuration found" in str(excinfo.value)
+    assert "No 'COMMANDS' configuration found" in str(excinfo.value)
 
 
-def test_get_routing_headers_bad_index_name(plastron_context):
-    plastron_context.config['ROUTING_HEADERS'] = {'solr': 'queue:solr'}
+def test_get_routing_headers_bad_index_name(plastron_context, reindex_command_config):
+    plastron_context.config['COMMANDS'] = reindex_command_config
     with pytest.raises(RuntimeError) as excinfo:
         get_routing_headers(plastron_context, 'foo')
 
     assert "'foo' is not a recognized index routing name." in str(excinfo.value)
 
 
-def test_get_routing_headers(plastron_context):
-    plastron_context.config['ROUTING_HEADERS'] = {'solr': {'FcrepoIndexingDestinations': 'activemq:index.solr'}}
-
+def test_get_routing_headers(plastron_context, reindex_command_config):
+    plastron_context.config['COMMANDS'] = reindex_command_config
     headers = get_routing_headers(plastron_context, 'solr')
+
     assert headers['FcrepoIndexingDestinations'] == 'activemq:index.solr'
