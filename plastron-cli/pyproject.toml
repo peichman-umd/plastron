@@ -31,7 +31,7 @@ dynamic = ["version"]
 
 [dependency-groups]
 dev = [
-    "pytest",
+    "pytest>=9.0",
     "pytest-cov",
     "responses",
     "ruff",
@@ -65,5 +65,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.dynamic]
 version = { "file" = "VERSION" }
 
-[tool.pytest.ini_options]
+[tool.pytest]
 markers = ['jobs_dir']
+# these warnings are coming from third-party code
+filterwarnings = [
+    "ignore:ConjunctiveGraph is deprecated:DeprecationWarning",
+    "ignore::pyparsing.PyparsingDeprecationWarning",
+]

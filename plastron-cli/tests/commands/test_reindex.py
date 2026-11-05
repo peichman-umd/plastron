@@ -2,7 +2,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from plastron.cli.commands.reindex import Command
+from plastron.cli.commands.reindex import create_message, get_routing_headers
 from plastron.messaging.broker import Broker, ServerTuple
 from plastron.repo import RepositoryResource, Tombstone
 
@@ -28,8 +28,7 @@ def test_create_message(plastron_context, broker):
         'FcrepoPath': '/foo',
         'FcrepoUser': 'plastron',
     }
-    cmd = Command(plastron_context)
-    destination, message = cmd.create_message(resource, username='plastron', routing_headers={})
+    destination, message = create_message(plastron_context, resource, routing_headers={})
     assert destination.name == '/queue/reindexing'
     assert not any(header.startswith('Camel') for header in message.headers.keys())
     for k, v in expected_headers.items():
@@ -45,9 +44,30 @@ def test_create_message_for_tombstone(plastron_context, broker):
         'FcrepoPath': '/foo',
         'FcrepoUser': 'plastron',
     }
-    cmd = Command(plastron_context)
-    destination, message = cmd.create_message(resource, username='plastron', routing_headers={})
+    destination, message = create_message(plastron_context, resource, routing_headers={})
     assert destination.name == '/queue/indexing'
     assert not any(header.startswith('Camel') for header in message.headers.keys())
     for k, v in expected_headers.items():
         assert message.headers[k] == v
+
+
+def test_get_routing_headers_no_config(plastron_context):
+    with pytest.raises(RuntimeError) as excinfo:
+        get_routing_headers(plastron_context, 'foo')
+
+    assert "No 'ROUTING_HEADERS' configuration found" in str(excinfo.value)
+
+
+def test_get_routing_headers_bad_index_name(plastron_context):
+    plastron_context.config['ROUTING_HEADERS'] = {'solr': 'queue:solr'}
+    with pytest.raises(RuntimeError) as excinfo:
+        get_routing_headers(plastron_context, 'foo')
+
+    assert "'foo' is not a recognized index routing name." in str(excinfo.value)
+
+
+def test_get_routing_headers(plastron_context):
+    plastron_context.config['ROUTING_HEADERS'] = {'solr': {'FcrepoIndexingDestinations': 'activemq:index.solr'}}
+
+    headers = get_routing_headers(plastron_context, 'solr')
+    assert headers['FcrepoIndexingDestinations'] == 'activemq:index.solr'
