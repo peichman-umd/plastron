@@ -35,6 +35,22 @@ def test_create_message(plastron_context, broker):
         assert message.headers[k] == v
 
 
+def test_create_message_with_delegated_user(plastron_context, broker):
+    plastron_context.broker = broker
+    plastron_context.delegated_user = 'johndoe'
+    resource = RepositoryResource(plastron_context.repo, '/foo')
+    expected_headers = {
+        'FcrepoUri': str(resource.url),
+        'FcrepoPath': '/foo',
+        'FcrepoUser': 'johndoe',
+    }
+    destination, message = create_message(plastron_context, resource, routing_headers={})
+    assert destination.name == '/queue/reindexing'
+    assert not any(header.startswith('Camel') for header in message.headers.keys())
+    for k, v in expected_headers.items():
+        assert message.headers[k] == v
+
+
 def test_create_message_for_tombstone(plastron_context, broker):
     plastron_context.broker = broker
     resource = Tombstone(RepositoryResource(plastron_context.repo, '/foo'))
