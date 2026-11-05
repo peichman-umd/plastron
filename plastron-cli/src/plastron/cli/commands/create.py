@@ -19,10 +19,12 @@ manager = get_manager()
     help='An RDF data property to set on the newly created resource; VALUE is treated as a Literal; repeatable.'
 )
 @option.object_properties(
-    help='An RDF object property to set on the newly created resource; VALUE is treated as a CURIE or URIRef; repeatable.'
+    help='An RDF object property to set on the newly created resource; VALUE is treated as a CURIE or URIRef; '
+         'repeatable.'
 )
 @option.types(
-    help='RDF type to add to the newly created resource; equivalent to "-O rdf:type TYPE"; TYPE is treated as a CURIE or URIRef; repeatable.'
+    help='RDF type to add to the newly created resource; equivalent to "-O rdf:type TYPE"; TYPE is treated as a CURIE '
+         'or URIRef; repeatable.'
 )
 @click.option(
     '--collection',
@@ -37,7 +39,8 @@ manager = get_manager()
 )
 @click.option(
     '--container',
-    help='Parent container for the new resource; use this to create a new resource with a repository-generated identifier.',
+    help='Parent container for the new resource; use this to create a new resource with a repository-generated '
+         'identifier.',
     metavar='PATH',
 )
 @click.argument('path', help='Path to the new resource.', required=False)
