@@ -5,9 +5,9 @@ import click
 from rdflib import Literal, URIRef
 
 from plastron.cli import option, argument
-from plastron.cli.utils import parse_data_property, parse_object_property
+from plastron.cli.utils import parse_data_property, parse_object_property, clean_lines
 from plastron.namespaces import get_manager, rdf
-from plastron.repo import RepositoryResource
+from plastron.repo import RepositoryResource, Tombstone
 from plastron.utils import parse_predicate_list, uri_or_curie
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ def find_command(
     match_all: bool,
     match_any: bool,
     recursive: str | None,
+    uris_file: Iterable[str] | None,
     uris: list[str],
 ):
     properties: list[tuple[URIRef, Literal | URIRef]] = [
@@ -73,7 +74,7 @@ def find_command(
             logger.info(f'  {p.n3(namespace_manager=manager)}')
 
     # default to search the repo root
-    for uri in uris or ['/']:
+    for uri in clean_lines(uris_file or [], uris or ['/']):
         for resource in find(
             start_resource=ctx.obj.repo[uri],
             matcher=match,
@@ -91,7 +92,7 @@ def find(
     matcher: Callable[[Iterable], bool],
     traverse: list[URIRef] | None = None,
     properties: list[tuple] | None = None,
-) -> Iterator[RepositoryResource]:
+) -> Iterator[RepositoryResource | Tombstone]:
     if traverse is None:
         traverse = []
     if properties is None:

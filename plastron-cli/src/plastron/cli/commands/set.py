@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.command(help='Set property values on objects')
-@option.model(required=True)
+@option.model_name(required=True)
 @click.option(
     '-F',
     '--field',

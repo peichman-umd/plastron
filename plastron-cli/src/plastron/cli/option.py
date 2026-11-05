@@ -140,7 +140,7 @@ def use_transactions(**kwargs):
     )
 
 
-def model(**kwargs):
+def model_name(**kwargs):
     """
     * Switches: `-m`, `--model`
     * Argument name: `model`
@@ -149,6 +149,7 @@ def model(**kwargs):
     return click.option(
         '-m',
         '--model',
+        'model_name',
         **dict(
             help='Content model.',
             type=click.Choice(importlib.metadata.entry_points(group='plastron.content_models').names),

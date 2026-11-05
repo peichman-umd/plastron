@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 @option.dry_run()
 @option.use_transactions()
 @click.option('--validate', is_flag=True, help='Validate before updating.')
-@option.model(help='Content model to use for validation.')
+@option.model_name(help='Content model to use for validation.')
 @click.option('--completed', help='File recording the URIs of updated resources.')
 @option.uris_file()
 @argument.uris()
@@ -40,18 +40,18 @@ def update_command(
     dry_run: bool,
     use_transactions: bool,
     validate: bool,
-    model: str | None,
+    model_name: str | None,
     completed: str,
     uris_file: Iterable[str] | None,
     uris: list[str],
 ):
-    if validate and model is None:
+    if validate and model_name is None:
         raise RuntimeError('Model must be provided when performing validation')
 
     ctx.obj.client.test_connection()
 
     # Retrieve the model to use for validation
-    model_class = get_model_from_name(model) if model else None
+    model_class = get_model_from_name(model_name) if model_name else None
 
     sparql_update = update_file.read().encode('utf-8')
 

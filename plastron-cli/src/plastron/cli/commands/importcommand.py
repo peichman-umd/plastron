@@ -48,7 +48,7 @@ def parse_model_header_map(model_class):
 
 
 @click.command(help='Import new or updated objects into the repository')
-@option.model()
+@option.model_name()
 @click.option('-l', '--limit', help='limit the number of rows to read from the import file', type=int)
 @click.option(
     '-%',
@@ -145,7 +145,7 @@ def parse_model_header_map(model_class):
 @click.pass_context
 def import_command(
     ctx: click.Context,
-    model: str | None,
+    model_name: str | None,
     limit: int | None,
     percentage: int | None,
     validate_only: bool,
@@ -167,9 +167,9 @@ def import_command(
     """Performs the import."""
 
     if template_file is not None:
-        if model is None:
+        if model_name is None:
             raise RuntimeError('A model is required for writing the template file')
-        write_model_template(model, template_file)
+        write_model_template(model_name, template_file)
         return
 
     config = ctx.obj.config.get('COMMANDS', {}).get('IMPORT', {})
@@ -216,14 +216,14 @@ def import_command(
             if import_file is None:
                 raise RuntimeError('An import file is required unless resuming an existing job')
 
-            if model is None:
+            if model_name is None:
                 raise RuntimeError('A model is required unless resuming an existing job')
 
             job = jobs.create_job(
                 job_class=ImportJob,
                 config=ImportConfig(
                     job_id=job_id,
-                    model=model,
+                    model=model_name,
                     access=access,
                     member_of=member_of,
                     container=container,
