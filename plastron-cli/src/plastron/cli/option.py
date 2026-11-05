@@ -4,6 +4,7 @@
 # fmt: off
 
 import click
+import importlib.metadata
 
 
 def data_properties(**kwargs):
@@ -70,6 +71,7 @@ def uris_file(**kwargs):
         '--uris-file',
         **dict(
             type=click.File(mode='r'),
+            help='File containing a list of URIs. Use "-" to read from STDIN.',
         ) | kwargs,
     )
 
@@ -134,5 +136,21 @@ def use_transactions(**kwargs):
         'use_transactions',
         **dict(
             help='Run with or without using transactions.',
+        ) | kwargs,
+    )
+
+
+def model(**kwargs):
+    """
+    * Switches: `-m`, `--model`
+    * Argument name: `model`
+    * Argument type: `str`
+    """
+    return click.option(
+        '-m',
+        '--model',
+        **dict(
+            help='Content model.',
+            type=click.Choice(importlib.metadata.entry_points(group='plastron.content_models').names),
         ) | kwargs,
     )

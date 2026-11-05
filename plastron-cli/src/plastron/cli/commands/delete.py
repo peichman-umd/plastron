@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 @option.dry_run()
 @option.use_transactions()
 @click.option('--completed', help='File recording the URIs of deleted resources.', type=click.Path())
-@option.uris_file(help='File containing a list of URIs of resources to delete.')
-@argument.uris(help='Repository URIs to be deleted.')
+@option.uris_file()
+@argument.uris()
 @click.help_option('--help', '-h')
 @click.pass_context
 def delete_command(

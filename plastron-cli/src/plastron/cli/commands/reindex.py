@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
     metavar='KEY',
     default='all',
 )
-@option.uris_file(help='File containing URIs of objects to reindex.')
-@argument.uris(help='URIs of repository objects to reindex.')
+@option.uris_file()
+@argument.uris()
 @click.help_option('-h', '--help')
 @click.pass_context
 def reindex_command(

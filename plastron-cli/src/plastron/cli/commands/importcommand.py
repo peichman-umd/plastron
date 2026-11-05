@@ -5,6 +5,7 @@ from typing import TextIO, Any
 
 import click
 
+from plastron.cli import option
 from plastron.jobs import Jobs
 from plastron.jobs.importjob import ImportConfig, ImportJob
 from plastron.jobs.importjob.ndnp import NDNPBatch, write_import_csv
@@ -47,7 +48,7 @@ def parse_model_header_map(model_class):
 
 
 @click.command(help='Import new or updated objects into the repository')
-@click.option('-m', '--model', help='data model to use')
+@option.model()
 @click.option('-l', '--limit', help='limit the number of rows to read from the import file', type=int)
 @click.option(
     '-%',

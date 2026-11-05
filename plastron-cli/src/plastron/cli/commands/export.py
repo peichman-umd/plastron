@@ -39,8 +39,8 @@ logger = logging.getLogger(__name__)
     metavar='MIME_TYPE[,MIME_TYPE...]',
     help='Include only binaries with a MIME type from this list.',
 )
-@option.uris_file(help='File containing a list of URIs of resources to export.')
-@argument.uris(help='URIs of resources to export.')
+@option.uris_file()
+@argument.uris()
 @click.help_option('-h', '--help')
 @click.pass_context
 def export_command(

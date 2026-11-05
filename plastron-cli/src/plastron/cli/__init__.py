@@ -61,7 +61,7 @@ def configure_logging(
 )
 @click.help_option('--help', '-h')
 @click.version_option(version, '--version', '-V')
-@click.option('-c', '--config', 'config_file', type=click.File(mode='r'), help='Path to configuration file.')
+@click.option('-c', '--config', 'config_file', type=click.File(mode='r'), help='Path to configuration file.', envvar='PLASTRON_CONFIG_FILE')
 @click.option('-v', '--verbose', is_flag=True, help='Increase the verbosity of the status output.')
 @click.option('-q', '--quiet', is_flag=True, help='Decrease the verbosity of the status output.')
 @click.option(

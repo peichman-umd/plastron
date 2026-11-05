@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 @click.command(help='Fix the order of pages in an object, using the page titles as a guide')
 @option.dry_run()
-@option.uris_file(help='File containing URIs of objects to fix.')
-@argument.uris(help='URIs of objects to fix')
+@option.uris_file()
+@argument.uris()
 @click.help_option('-h', '--help')
 @click.pass_context
 def fixpageorder_command(

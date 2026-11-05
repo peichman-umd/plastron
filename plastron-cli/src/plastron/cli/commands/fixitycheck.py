@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
     default='csv',
     help='output format of results; default is "csv"',
 )
-@option.uris_file(help='File containing a list of URIs of objects to fixity check')
-@argument.uris(help='URIs of objects to fixity check')
+@option.uris_file()
+@argument.uris()
 @click.help_option('--help', '-h')
 @click.pass_context
 def fixitycheck_command(

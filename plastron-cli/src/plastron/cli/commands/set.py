@@ -17,13 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.command(help='Set property values on objects')
-@click.option(
-    '-m',
-    '--model',
-    'model_name',
-    required=True,
-    help='Name of the model class of the objects.',
-)
+@option.model(required=True)
 @click.option(
     '-F',
     '--field',
@@ -33,7 +27,7 @@ logger = logging.getLogger(__name__)
     metavar='FIELD_NAME VALUE',
     help='Field to set; repeatable; for object properties, VALUE should be either an absolute http:// or https:// URI, or a CURIE with a known prefix.',
 )
-@option.uris_file(help='File listing URIs of objects modify')
+@option.uris_file()
 @argument.uris()
 @click.help_option('--help', '-h')
 @click.pass_context

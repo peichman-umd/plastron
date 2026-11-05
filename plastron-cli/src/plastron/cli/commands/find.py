@@ -27,6 +27,7 @@ manager = get_manager()
     '--match-any', is_flag=True, help='Require at least one property to match to include a resource in the result list.'
 )
 @option.recursive()
+@option.uris_file()
 @argument.uris(help='Search starting at this URI in the repository; repeatable. Defaults to the repository root ("/").')
 @click.help_option('--help', '-h')
 @click.pass_context

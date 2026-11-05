@@ -27,14 +27,10 @@ logger = logging.getLogger(__name__)
 @option.dry_run()
 @option.use_transactions()
 @click.option('--validate', is_flag=True, help='Validate before updating.')
-@click.option(
-    '-m',
-    '--model',
-    help='The model class to use for validation (Item, Issue, Poster, or Letter).',
-)
+@option.model(help='Content model to use for validation.')
 @click.option('--completed', help='File recording the URIs of updated resources.')
-@option.uris_file(help='File containing a list of URIs to update')
-@argument.uris(help='URIs of repository objects to update')
+@option.uris_file()
+@argument.uris()
 @click.help_option('-h', '--help')
 @click.pass_context
 def update_command(

@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help='Remove the "Hidden" state from these objects.',
 )
-@option.uris_file(help='File containing URIs of objects to publish.')
-@argument.uris(help='URIs of objects to publish.')
+@option.uris_file()
+@argument.uris()
 @click.help_option('-h', '--help')
 @click.pass_context
 def publish_command(

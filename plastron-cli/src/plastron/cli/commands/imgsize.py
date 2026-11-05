@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.command(help='Add width and height to image resources')
-@argument.uris(help='URIs of repository objects to get image info')
+@argument.uris()
 def imgsize_command(ctx: click.Context, uris: list[str]):
     for uri in uris:
         file_resource: BinaryResource = ctx.obj.repo.read(uri, BinaryResource)

@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 @click.command(help='List objects in the repository')
 @click.option('--long', '-l', is_flag=True, help='Display additional information besides the URI.')
-@argument.uris(help='URIs of repository objects to list.')
+@argument.uris()
+@click.help_option('-h', '--help')
 @click.pass_context
 def ls_command(ctx: click.Context, long: bool, uris: list[str]):
     # default to list the repo root
